@@ -1,0 +1,333 @@
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 50px;
+  padding-bottom: 300px;
+ 
+}
+
+.left-h {
+  padding: 2rem;
+  padding-top: 1.5rem;
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.right-h {
+  
+  flex: 1;
+  position: relative;
+}
+
+.stroke-text{
+  color:#F15A24;
+}
+
+.hero-blur {
+  width: 22rem;
+  height: 30rem;
+  left: 0;
+}
+
+.float {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  right: 30px;
+  bottom: 40px;
+  background-color: #25d366;
+  font-size: 30px;
+  padding-top: 11px;
+  color: white;
+  font-weight: 500px;
+  border-radius: 50px;
+  text-align: center;
+  box-shadow: 2px 2px 3px #999;
+  z-index: 100;
+}
+
+.the-best {
+  margin-top: 4rem;
+  background-color: #393d42;
+  border-radius: 4rem;
+  width: fit-content;
+  padding: 20px 13px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  color: white;
+}
+
+.the-best > span {
+  z-index: 2;
+}
+
+.the-best > div {
+  position: absolute;
+  background-color: #F15A24;
+  width: 5.4rem;
+  height: 80%;
+  left: 8px;
+  z-index: 1;
+  border-radius: 3rem;
+}
+
+.hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  text-transform: uppercase;
+  font-size: 4.5rem;
+  font-weight: bold;
+  color: white;
+  text-overflow: inherit;
+}
+
+.hero-text > div:nth-of-type(3) {
+  font-size: 1rem;
+  font-weight: 200;
+  text-transform: none;
+  letter-spacing: 1px;
+  width: 80%;
+}
+
+.figures {
+  display: flex;
+  gap: 2rem;
+}
+
+.figures > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.figures > div > span:nth-of-type(1) {
+  color: white;
+  font-size: 2rem;
+}
+
+.figures > div > span:nth-of-type(2) {
+  color: var(--gray);
+  text-transform: uppercase;
+}
+
+.hero-btns {
+  display: flex;
+  padding-top: 2rem;
+  gap: 2rem;
+  font-weight: normal !important;
+}
+
+.hero-btns > :nth-child(1) {
+  color: white;
+  background-color:#F15A24;
+  width: 8rem;
+}
+
+.hero-btns > :nth-child(2) {
+  color: white;
+  background-color: transparent;
+  width: 8rem;
+  border: 2px solid var(--orange);
+}
+
+/* right side */
+.auth-buttons {
+  display: flex;
+  gap: 1rem;
+  position: absolute;
+  top: 2rem;
+  right: 3rem;
+}
+
+.right-h .register-btn {
+  background-color: #000000;
+  color: #ffffff;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.right-h .register-btn:hover {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.right-h .SignIn-btn {
+  background-color: #000000;
+  color: #ffffff;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.SignIn-btn,
+.register-btn {
+  text-decoration: none;
+}
+
+
+/* ✅ Bold, dark box for "Where Runners Become Doers" */
+.heart-rate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background-color: #1f1f1f;
+  color: white;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  align-items: flex-start;
+  border-radius: 8px;
+  position: absolute;
+  right: 4rem;
+  top: 7rem;
+  width: fit-content;
+  font-size: 1rem;
+  text-align: left;
+}
+
+/* Hero Images */
+.hero-img {
+  position: absolute;
+  top: 10rem;
+  right: 8rem;
+  width: 23rem;
+}
+
+.hero-back {
+  position: absolute;
+  top: 4rem;
+  right: 20rem;
+  z-index: -1;
+  width: 15rem;
+}
+
+/* ✅ Bold, matching box for "5km run" (reverted from 2km) */
+.calories {
+  display: flex;
+  background-color: #1f1f1f;
+  color: white;
+  font-weight: 600;
+  padding: 1.5rem;
+  border-radius: 8px;
+  position: absolute;
+  top: 32rem;
+  right: 28rem;
+  width: fit-content;
+  font-size: 1rem;
+  text-align: left;
+}
+
+/* put near the end of Hero.css so it loads last */
+.hero .hero-text .stroke-text {
+  color: transparent;
+  -webkit-text-stroke-width: 2px;
+  -webkit-text-stroke-color: #F15A24;
+  -webkit-text-fill-color: #F15A24 ;
+}
+
+
+@media screen and (max-width: 768px) {
+  .hero {
+    flex-direction: column;
+  }
+
+  .hero-blur {
+    width: 14rem;
+  }
+
+  .the-best {
+    margin-top: 0;
+    font-size: small;
+    align-self: center;
+    transform: scale(0.8);
+  }
+
+  .hero-text {
+    font-size: xx-large;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-text > div:nth-of-type(3) {
+    font-size: small;
+    font-weight: 200;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+
+  .hero-btns {
+    justify-content: center;
+  }
+
+  .figures > div > span:nth-of-type(1) {
+    font-size: large;
+  }
+
+  .figures > div > span:nth-of-type(2) {
+    font-size: small;
+  }
+
+  .right-h {
+    position: relative;
+    background: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items horizontally */
+    padding-top: 1rem; /* Adjust overall padding */
+  }
+
+  .auth-buttons {
+    position: static;
+    margin-top: 1rem; /* Adjusted margin */
+    gap: 2rem;
+  }
+
+  .heart-rate {
+    position: static; /* Let it flow naturally */
+    margin-top: 1rem; /* Space from buttons */
+    left: auto;
+    top: auto;
+    right: auto;
+    align-self: center; /* Center it horizontally */
+    z-index: 1; 
+  }
+
+  .calories {
+    position: static; /* Let it flow naturally */
+    margin-top: 1rem; /* Space from heart-rate */
+    left: auto;
+    top: auto;
+    right: auto;
+    align-self: center; /* Center it horizontally */
+  }
+
+  .hero-img {
+    position: static; /* Let it flow naturally */
+    width: 15rem;
+    left: auto;
+    top: auto;
+    align-self: center;
+    margin-top: 1rem; /* Space from calories */
+  }
+
+  .hero-back {
+    position: static; /* Let it flow naturally */
+    width: 15rem;
+    left: auto;
+    top: auto;
+    align-self: center;
+    z-index: -1;
+    margin-top: 0rem; /* Adjust as needed */
+  }
+}

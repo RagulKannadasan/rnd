@@ -1,0 +1,458 @@
+.profile {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--appColor) 0%, var(--darkGrey) 100%);
+  color: white;
+}
+
+.profile-main {
+  padding-top: 70px;
+}
+
+.profile-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.profile-header h1 {
+  font-size: 2.5rem;
+  margin: 0;
+  color: var(--orange);
+}
+
+.edit-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.edit-profile-btn:hover {
+  background: #d14a1f;
+  transform: translateY(-2px);
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.profile-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.card-icon {
+  color: var(--orange);
+  font-size: 1.5rem;
+}
+
+.card-header h2 {
+  margin: 0;
+  color: white;
+  font-size: 1.3rem;
+}
+
+/* Overview Card */
+.profile-overview {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  background: var(--orange);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.profile-basic-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.user-level {
+  color: var(--orange);
+  font-weight: bold;
+  margin: 0 0 0.25rem 0;
+}
+
+.member-since {
+  color: #ccc;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Details Section */
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.detail-icon {
+  color: var(--orange);
+  font-size: 1.2rem;
+  min-width: 24px;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.detail-label {
+  font-size: 0.8rem;
+  color: #ccc;
+  margin-bottom: 0.25rem;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: white;
+  font-weight: 500;
+}
+
+/* Form inputs in profile details */
+.detail-content input,
+.detail-content select,
+.detail-content textarea {
+  width: 100%;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+}
+
+.detail-content input:focus,
+.detail-content select:focus,
+.detail-content textarea:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 2px rgba(241, 90, 36, 0.3);
+}
+
+.detail-content textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Achievements Card */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  flex-grow: 1;
+}
+
+.achievement-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  height: 100%;
+  transition: all 0.3s ease;
+  justify-content: center;
+  text-align: center;
+}
+
+.achievement-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.02);
+}
+
+.achievement-icon {
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(241, 90, 36, 0.2);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.achievement-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  align-items: center;
+}
+
+.achievement-info h4 {
+  margin: 0 0 0.25rem 0;
+  color: white;
+  font-size: 1rem;
+}
+
+.achievement-date {
+  color: #ccc;
+  font-size: 0.8rem;
+}
+
+/* Edit Actions */
+.edit-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.save-btn, .cancel-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.save-btn {
+  background: #27ae60;
+  color: white;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #219653;
+  transform: translateY(-2px);
+}
+
+.save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  background: #e74c3c;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+}
+
+/* Error Message */
+.error-message {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 2rem;
+  color: white;
+  font-size: 1.2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-content {
+    padding: 1rem;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .profile-overview {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .achievements-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+  
+  .edit-actions {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Animation Classes */
+.profile-card {
+  transition: all 0.3s ease;
+}
+
+.profile-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.achievement-item {
+  transition: all 0.3s ease;
+}
+
+.achievement-item:hover {
+  transform: scale(1.02);
+}
+
+.danger-zone {
+  border-color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.danger-zone-content p {
+  color: #f2a299;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.delete-account-btn {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  font-weight: bold;
+}
+
+.delete-account-btn:hover {
+  background-color: #c0392b;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: #333;
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+  text-align: center;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.popup-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.popup-confirm-btn, .popup-cancel-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.popup-confirm-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.popup-confirm-btn:hover {
+  background-color: #c0392b;
+}
+
+.popup-cancel-btn {
+  background-color: #777;
+  color: white;
+}
+
+.popup-cancel-btn:hover {
+  background-color: #555;
+}

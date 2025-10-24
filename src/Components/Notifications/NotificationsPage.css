@@ -1,0 +1,127 @@
+.notifications-page {
+  padding: 20px;
+  background-color: #1a1a1a;
+  min-height: 100vh;
+}
+
+.notifications-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.notifications-container h1 {
+  color: white;
+  margin-bottom: 20px;
+  font-size: 2rem;
+}
+
+.no-notifications {
+  text-align: center;
+  padding: 40px 20px;
+  background: #2d2d2d;
+  border-radius: 8px;
+  color: #ccc;
+}
+
+.no-notifications p {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.notification-item {
+  background: #2d2d2d;
+  border-radius: 8px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 4px solid #efedec;
+}
+
+.notification-item:hover {
+  background: #3d3d3d;
+}
+
+.notification-item.unread {
+  background: #333333;
+  border-left: 4px solid #f15a24;
+}
+
+.notification-item.read {
+  border-left: 4px solid #666;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.notification-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.notification-time {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.notification-content p {
+  margin: 0 0 10px 0;
+  color: #ddd;
+  line-height: 1.5;
+}
+
+.notification-event {
+  background: rgba(241, 90, 36, 0.1);
+  padding: 8px 12px;
+  border-radius: 4px;
+  color: #f15a24;
+  font-size: 0.9rem;
+}
+
+.notification-actions {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mark-as-read-btn {
+  background: #f15a24;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+}
+
+.mark-as-read-btn:hover {
+  background: #d1481e;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .notifications-page {
+    padding: 15px;
+  }
+  
+  .notification-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .notification-time {
+    align-self: flex-end;
+  }
+}

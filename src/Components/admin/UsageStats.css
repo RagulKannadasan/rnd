@@ -1,0 +1,65 @@
+.usage-stats {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.usage-stats.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.usage-stats h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  background-color: white;
+  padding: 15px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.stat-card h4 {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff6b35;
+  margin: 0;
+}
+
+.quota-info {
+  background-color: #e9ecef;
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 20px;
+}
+
+.quota-info p {
+  margin: 10px 0;
+}
+
+.firebase-info ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.firebase-info li {
+  margin: 5px 0;
+}

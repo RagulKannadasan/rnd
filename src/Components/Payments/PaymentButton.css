@@ -1,0 +1,162 @@
+.payment-button {
+  background: linear-gradient(90deg, #F15A24 0%, #F58520 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.3);
+  min-width: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(241, 90, 36, 0.4);
+}
+
+.payment-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.payment-button.enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.payment-button.enhanced:hover::before {
+  left: 100%;
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 1;
+}
+
+.spinner-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.card-icon, .lock-icon, .qr-icon {
+  font-size: 1.2rem;
+}
+
+.qr-payment-button {
+  background: linear-gradient(90deg, #25D366 0%, #128C7E 100%);
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+
+.qr-payment-button:hover {
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+.qr-display-section {
+  text-align: center;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.qr-code-container {
+  margin: 1.5rem auto;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.qr-instructions {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(37, 211, 102, 0.1);
+  border-radius: 8px;
+  border: 1px dashed rgba(37, 211, 102, 0.3);
+}
+
+.qr-instructions p {
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.payment-status {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.payment-status.success {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+}
+
+.payment-status.failed, .payment-status.timeout {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  color: #ff6b6b;
+}
+
+.payment-status.pending {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.payment-status.pending .spinner-icon {
+  margin-right: 0.5rem;
+}
+
+.payment-status.pending .small {
+  font-size: 0.8rem;
+  font-weight: normal;
+  opacity: 0.8;
+}
+
+.retry-button, .secondary-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0.5rem;
+}
+
+.retry-button:hover, .secondary-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.qr-actions {
+  margin-top: 1.5rem;
+}
