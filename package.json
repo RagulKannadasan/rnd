@@ -32,21 +32,17 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build:netlify": "react-scripts build",
     "build:analyze": "react-scripts build && npx serve -s build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "node scripts/server.js",
     "test-server": "node scripts/test-server-access.js",
-    "netlify": "netlify",
-    "netlify:SignIn": "netlify SignIn",
-    "netlify:deploy": "netlify deploy",
-    "netlify:deploy:prod": "netlify deploy --prod",
     "init-community-data": "node scripts/initCommunityData.js",
     "fix-community-posts": "node scripts/fixCommunityPosts.js",
     "update-stats": "node scripts/updateUserStats.js",
     "update-stats-all": "node scripts/updateUserStats.js --all",
-    "update-stats-recent": "node scripts/updateUserStats.js --recent"
+    "update-stats-recent": "node scripts/updateUserStats.js --recent",
+    "vercel-build": "npm run build"
   },
   "eslintConfig": {
     "extends": [
@@ -70,8 +66,6 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "cypress": "^15.2.0",
-    "netlify": "^13.1.2",
-    "netlify-cli": "^23.5.1"
+    "cypress": "^15.2.0"
   }
 }
