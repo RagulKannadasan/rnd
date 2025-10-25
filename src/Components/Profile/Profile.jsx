@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updateProfile, deleteUser } from 'firebase/auth';
-import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { FaUser, FaEdit, FaSave, FaTimes, FaChartLine, FaTrophy, FaMapMarkerAlt, FaPhone, FaEnvelope, FaBirthdayCake, FaVenusMars, FaInstagram, FaRunning } from 'react-icons/fa';
 import DashboardNav from '../DashboardNav/DashboardNav';
@@ -111,7 +111,7 @@ const UserProfile = () => {
         emergencyContact: formData.emergencyContact || '',
         instagram: formData.instagram || '',
         joinCrew: formData.joinCrew || false,
-        updatedAt: serverTimestamp()
+        updatedAt: new Date()
       }, { merge: true });
       
       setIsEditing(false);
