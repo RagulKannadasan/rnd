@@ -20,7 +20,7 @@ const DashboardNav = () => {
     { path: '/dashboard', label: 'Dashboard', icon: FaHome },
     { path: '/community', label: 'Community', icon: FaUsers },
     // Removed progress page from navigation
-    { path: '/events', label: 'Events', icon: FaCalendarAlt },
+    { path: '/user-events', label: 'My Events', icon: FaCalendarAlt },
     // Add Plans page to navigation
     { path: '/plans', label: 'Plans', icon: FaRunning }
   ];

@@ -116,13 +116,13 @@ const AdminPage = () => {
             switch (activeTab) {
                 case 'dashboard': return <Dashboard setActiveTab={setActiveTab} />;
                 case 'bookings': return <Bookings />;
-                case 'manage-events': return <ManageEvents />;
                 case 'analytics': return <Analytics />;
                 case 'newregistrations': return <NewRegistrations />;
                 case 'subscribers': return <Subscribers />;
                 case 'reports': return <Reports />;
                 case 'qrscanner': return <QRScanner />;
                 case 'payments': return <Payments />;
+                case 'manageevents': return <ManageEvents />;
                 default: return <Dashboard setActiveTab={setActiveTab} />;
             }
         } catch (error) {
@@ -142,8 +142,8 @@ const AdminPage = () => {
     const navItems = [
         { id: 'dashboard', label: 'Dashboard' },
         { id: 'bookings', label: 'Bookings' },
-        { id: 'manage-events', label: 'Manage Events' },
         { id: 'payments', label: 'Payments' },
+        { id: 'manageevents', label: 'Manage Events' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'newregistrations', label: 'Registrations' },
         { id: 'subscribers', label: 'Subscribers' },

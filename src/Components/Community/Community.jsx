@@ -134,16 +134,16 @@ const Community = () => {
         };
       });
       
-      Promise.all(promises).then((users) => {
+      Promise.all(promises).then((usersWithCalculatedStats) => {
         // Sort users by total distance (descending), then by total runs (descending)
-        users.sort((a, b) => {
+        usersWithCalculatedStats.sort((a, b) => {
           if (b.totalDistance !== a.totalDistance) {
             return b.totalDistance - a.totalDistance;
           }
           return b.totalRuns - a.totalRuns;
         });
         
-        setRankedUsers(users);
+        setRankedUsers(usersWithCalculatedStats);
       });
     }, (error) => {
       console.error('Error fetching users:', error);
@@ -178,16 +178,16 @@ const Community = () => {
           };
         });
         
-        Promise.all(promises).then((users) => {
+        Promise.all(promises).then((usersWithCalculatedStats) => {
           // Sort users by total distance (descending), then by total runs (descending)
-          users.sort((a, b) => {
+          usersWithCalculatedStats.sort((a, b) => {
             if (b.totalDistance !== a.totalDistance) {
               return b.totalDistance - a.totalDistance;
             }
             return b.totalRuns - a.totalRuns;
           });
           
-          setRankedUsers(users);
+          setRankedUsers(usersWithCalculatedStats);
         });
       });
     }, (error) => {

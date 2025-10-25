@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./Plans.css";
-import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar, FaQrcode } from "react-icons/fa";
+import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar, FaLock, FaQrcode } from "react-icons/fa";
 import { Element } from 'react-scroll';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -9,7 +9,6 @@ import Notification from '../Notification/Notification';
 import SignUpNotification from '../SignUpNotification/SignUpNotification';
 import PlanNotification from './PlanNotification';
 import PaymentButton from '../Payments/PaymentButton';
-import QRPayment from '../Payments/QRPayment';
 import { getCurrentUser } from '../../services/paymentService';
 import firebaseService from '../../services/firebaseService';
 
@@ -20,6 +19,256 @@ const Plans = () => {
   const [showPlanNotification, setShowPlanNotification] = useState(false);
   const [notification, setNotification] = useState(null);
   const [isEligibleForFreeTrial, setIsEligibleForFreeTrial] = useState(true); // Default to true for public pages
+  const [bookingsUpdated, setBookingsUpdated] = useState(0); // State to track booking updates
+  const [purchasedPlan, setPurchasedPlan] = useState(null); // State to track which plan was purchased
+
+  const checkFreeTrialEligibility = useCallback(async (userId, phoneNumber) => {
+    try {
+      // Check if user has any existing bookings within the last week
+      const bookingsRef = collection(db, 'bookings');
+      const userQuery = query(bookingsRef, where('userId', '==', userId));
+      
+      // Create a promise with timeout for the user query
+      const userQueryWithTimeout = new Promise(async (resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Timeout while checking user bookings'));
+        }, 10000); // 10 second timeout
+        
+        try {
+          const result = await getDocs(userQuery);
+          clearTimeout(timeoutId);
+          resolve(result);
+        } catch (error) {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      });
+      
+      const userQuerySnapshot = await userQueryWithTimeout;
+      
+      if (!userQuerySnapshot.empty) {
+        // Check if any booking is within the last week (7 days)
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const hasRecentBooking = userQuerySnapshot.docs.some(doc => {
+          const bookingData = doc.data();
+          const bookingDate = bookingData.bookingDate;
+          
+          if (bookingDate && typeof bookingDate.toDate === 'function') {
+            return bookingDate.toDate() > oneWeekAgo;
+          } else if (bookingDate instanceof Date) {
+            return bookingDate > oneWeekAgo;
+          } else {
+            const date = new Date(bookingDate);
+            return date > oneWeekAgo;
+          }
+        });
+        
+        setIsEligibleForFreeTrial(!hasRecentBooking);
+        return !hasRecentBooking;
+      }
+      
+      // Check if phone number has been used for a free trial within the last week
+      if (phoneNumber) {
+        const phoneQuery = query(bookingsRef, where('phoneNumber', '==', phoneNumber));
+        
+        // Create a promise with timeout for the phone query
+        const phoneQueryWithTimeout = new Promise(async (resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            reject(new Error('Timeout while checking phone number'));
+          }, 10000); // 10 second timeout
+          
+          try {
+            const result = await getDocs(phoneQuery);
+            clearTimeout(timeoutId);
+            resolve(result);
+          } catch (error) {
+            clearTimeout(timeoutId);
+            reject(error);
+          }
+        });
+        
+        const phoneQuerySnapshot = await phoneQueryWithTimeout;
+        
+        if (!phoneQuerySnapshot.empty) {
+          // Check if any booking is within the last week (7 days)
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          
+          const hasRecentBooking = phoneQuerySnapshot.docs.some(doc => {
+            const bookingData = doc.data();
+            const bookingDate = bookingData.bookingDate;
+            
+            if (bookingDate && typeof bookingDate.toDate === 'function') {
+              return bookingDate.toDate() > oneWeekAgo;
+            } else if (bookingDate instanceof Date) {
+              return bookingDate > oneWeekAgo;
+            } else {
+              const date = new Date(bookingDate);
+              return date > oneWeekAgo;
+            }
+          });
+          
+          const eligible = !hasRecentBooking;
+          setIsEligibleForFreeTrial(eligible);
+          return eligible;
+        }
+      }
+      
+      setIsEligibleForFreeTrial(true);
+      return true;
+    } catch (error) {
+      console.error('Error checking free trial eligibility:', error);
+      // On error (including timeout), default to eligible but show a warning
+      setIsEligibleForFreeTrial(true);
+      showNotification("There was a delay checking your eligibility. Please try again.", 'error');
+      return true;
+    }
+  }, []);
+
+  // Function to check if user has booked this week or month based on plan
+  const hasBookedThisWeek = useCallback((planName) => {
+    // Get bookings from localStorage
+    const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+    
+    if (!localBookings || localBookings.length === 0) {
+      return false;
+    }
+    
+    // Get today's date for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // For Monthly Membership, check if booked this month
+    if (planName === 'Monthly Membership') {
+      // Get start of month
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      // Get end of month
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+      
+      // Check if any booking was made this month for Monthly Membership
+      return localBookings.some(booking => {
+        // Check if booking is for Monthly Membership
+        if (booking.eventName !== 'Monthly Membership') {
+          return false;
+        }
+        
+        // Check if booking was made this month
+        const bookingDate = booking.bookingDate || booking.createdAt;
+        if (bookingDate) {
+          let bookingTime;
+          if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+            bookingTime = bookingDate.toDate();
+          } else if (bookingDate instanceof Date) {
+            bookingTime = bookingDate;
+          } else {
+            bookingTime = new Date(bookingDate);
+          }
+          
+          return bookingTime >= startOfMonth && bookingTime <= endOfMonth;
+        }
+        
+        return false;
+      });
+    }
+    
+    // For Pay-Per-Run, check if booked this week
+    // Get current week start (Monday)
+    const dayOfWeek = today.getDay();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)); // Adjust when Sunday (0)
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    // Get end of week (Sunday)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    
+    // Check if any booking was made this week for Pay-Per-Run
+    return localBookings.some(booking => {
+      // Check if booking matches the plan name
+      if (booking.eventName !== planName) {
+        return false;
+      }
+      
+      // First check if booking was made today (immediate feedback)
+      const bookingDate = booking.bookingDate || booking.createdAt;
+      if (bookingDate) {
+        let bookingTime;
+        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+          bookingTime = bookingDate.toDate();
+        } else if (bookingDate instanceof Date) {
+          bookingTime = bookingDate;
+        } else {
+          bookingTime = new Date(bookingDate);
+        }
+        
+        // Set time to beginning of day for comparison
+        bookingTime.setHours(0, 0, 0, 0);
+        
+        // If booking was made today, return true immediately
+        if (bookingTime.getTime() === today.getTime()) {
+          return true;
+        }
+        
+        // Otherwise check if booking was made this week
+        return bookingTime >= startOfWeek && bookingTime <= endOfWeek;
+      }
+      
+      return false;
+    });
+  }, []);
+
+  // Function to check if user has booked a monthly plan
+  const hasBookedMonthly = useCallback(() => {
+    // Get bookings from localStorage
+    const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+    
+    if (!localBookings || localBookings.length === 0) {
+      return false;
+    }
+    
+    // Get today's date for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Get start of month
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    
+    // Get end of month
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    endOfMonth.setHours(23, 59, 59, 999);
+    
+    // Check if any booking was made this month for Monthly Membership only
+    return localBookings.some(booking => {
+      // Check if booking is for Monthly Membership
+      if (booking.eventName !== 'Monthly Membership') {
+        return false;
+      }
+      
+      // Check if booking was made this month
+      const bookingDate = booking.bookingDate || booking.createdAt;
+      if (bookingDate) {
+        let bookingTime;
+        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+          bookingTime = bookingDate.toDate();
+        } else if (bookingDate instanceof Date) {
+          bookingTime = bookingDate;
+        } else {
+          bookingTime = new Date(bookingDate);
+        }
+        
+        return bookingTime >= startOfMonth && bookingTime <= endOfMonth;
+      }
+      
+      return false;
+    });
+  }, []);
 
   // Check free trial eligibility when component mounts and user changes
   useEffect(() => {
@@ -29,53 +278,63 @@ const Plans = () => {
         const isOnDashboard = document.querySelector('.plans-page') !== null;
         if (isOnDashboard) {
           // Only check eligibility on dashboard pages
-          await checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber || '');
+          try {
+            await checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber || '');
+            
+            // Check if there's a recent booking to set purchasedPlan
+            const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+            if (localBookings.length > 0) {
+              // Get the most recent booking
+              const mostRecentBooking = localBookings.reduce((latest, current) => {
+                const latestDate = new Date(latest.bookingDate || latest.createdAt);
+                const currentDate = new Date(current.bookingDate || current.createdAt);
+                return currentDate > latestDate ? current : latest;
+              });
+              
+              // Set the purchased plan based on the most recent booking
+              setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
+            }
+          } catch (error) {
+            console.error('Error in useEffect while checking eligibility:', error);
+            showNotification("There was an issue checking your plan eligibility. Please refresh the page.", 'error');
+          }
         }
       } else {
         // Reset eligibility for non-logged in users
         setIsEligibleForFreeTrial(true);
+        setPurchasedPlan(null);
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [checkFreeTrialEligibility, hasBookedThisWeek, bookingsUpdated]);
 
-  const checkFreeTrialEligibility = async (userId, phoneNumber) => {
-    try {
-      // Check if user has any existing bookings
-      const bookingsRef = collection(db, 'bookings');
-      const q = query(
-        bookingsRef,
-        where('userId', '==', userId)
-      );
-      const querySnapshot = await getDocs(q);
+  // Check for changes in bookings
+  useEffect(() => {
+    const checkForBookingChanges = () => {
+      // Update the state to trigger a re-render
+      setBookingsUpdated(prev => prev + 1);
       
-      if (!querySnapshot.empty) {
-        setIsEligibleForFreeTrial(false);
-        return false;
+      // Check if there's a new booking and reset purchasedPlan if needed
+      const newBooking = localStorage.getItem('newBooking');
+      if (newBooking) {
+        try {
+          const booking = JSON.parse(newBooking);
+          setPurchasedPlan(booking.eventName || 'Unknown Plan');
+        } catch (e) {
+          console.error('Error parsing new booking:', e);
+        }
       }
-      
-      // Check if phone number has been used for a free trial
-      if (phoneNumber) {
-        const phoneQuery = query(
-          bookingsRef,
-          where('phoneNumber', '==', phoneNumber)
-        );
-        const phoneQuerySnapshot = await getDocs(phoneQuery);
-        
-        const eligible = phoneQuerySnapshot.empty;
-        setIsEligibleForFreeTrial(eligible);
-        return eligible;
-      }
-      
-      setIsEligibleForFreeTrial(true);
-      return true;
-    } catch (error) {
-      console.error('Error checking free trial eligibility:', error);
-      setIsEligibleForFreeTrial(true); // Default to eligible on error
-      return true;
-    }
-  };
+    };
+    
+    // Check immediately
+    checkForBookingChanges();
+    
+    // Check every 5 seconds
+    const interval = setInterval(checkForBookingChanges, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const plansData = [
     {
@@ -163,6 +422,104 @@ const Plans = () => {
     setSelectedPlan(null);
   };
 
+  // Handle free trial booking directly
+  const handleFreeTrialBooking = async () => {
+    try {
+      const user = getCurrentUser();
+      if (!user) {
+        // If no user, redirect to signup
+        setShowSignUpNotification(true);
+        return;
+      }
+
+      // Check eligibility first
+      if (!isEligibleForFreeTrial) {
+        showNotification("You've already claimed your free trial. Upgrade to a paid plan for continued access.", 'info');
+        return;
+      }
+
+      // Get the selected event from localStorage if it exists
+      const selectedEventStr = localStorage.getItem('selectedEvent');
+      let eventInfo = null;
+      if (selectedEventStr) {
+        try {
+          eventInfo = JSON.parse(selectedEventStr);
+        } catch (e) {
+          console.error('Error parsing selected event:', e);
+        }
+      }
+
+      // Prepare booking data for free trial
+      const bookingData = {
+        eventName: eventInfo ? eventInfo.name || eventInfo.title : "Free Trial",
+        eventId: eventInfo ? String(eventInfo.id) : "free_trial",
+        eventDate: eventInfo ? new Date(eventInfo.date) : new Date(),
+        eventTime: eventInfo ? eventInfo.time : '',
+        eventLocation: eventInfo ? eventInfo.location : '',
+        status: 'confirmed',
+        amount: 0, // Free trial
+        paymentId: 'free_trial_' + Date.now(),
+        mode: 'free_trial',
+        userId: user.uid,
+        userEmail: user.email,
+        userName: user.name,
+        phoneNumber: user.phoneNumber,
+        bookingDate: new Date()
+      };
+
+      // Create the booking in Firestore
+      const result = await firebaseService.createBooking(user.uid, bookingData);
+      console.log('Free trial booking created successfully with ID:', result.bookingId);
+
+      // Add the booking ID to the booking data for storage
+      const bookingDataWithId = {
+        ...bookingData,
+        id: result.bookingId
+      };
+
+      // Clear the selected event from localStorage
+      localStorage.removeItem('selectedEvent');
+
+      // Set flags in localStorage to indicate that bookings should be refreshed
+      localStorage.setItem('refreshBookings', 'true');
+      localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
+      localStorage.setItem('eventsUpdated', 'true');
+
+      // Store booking data for ticket display
+      localStorage.setItem('latestBooking', JSON.stringify(bookingDataWithId));
+
+      // Store in a global key that both pages will check
+      localStorage.setItem('latestEventBooking', JSON.stringify({
+        eventId: bookingData.eventId,
+        bookingId: result.bookingId,
+        timestamp: Date.now()
+      }));
+
+      // Update eventBookings in localStorage to include the new booking
+      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      const updatedBookings = [...localBookings, bookingDataWithId];
+      localStorage.setItem('eventBookings', JSON.stringify(updatedBookings));
+
+      // Set the purchased plan
+      setPurchasedPlan("Free Trial");
+
+      // Close the plan notification
+      setShowPlanNotification(false);
+      setSelectedPlan(null);
+
+      // Show success notification
+      showNotification('Free trial booked successfully! Enjoy your session.', 'success');
+
+      // Redirect to dashboard where user can see their ticket
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1500);
+    } catch (error) {
+      console.error('Error creating free trial booking:', error);
+      showNotification('Failed to book free trial. Please try again.', 'error');
+    }
+  };
+
   const handlePayNow = (plan) => {
     // Check if we're on the landing page or user page/dashboard
     // More reliable detection using the specific class
@@ -180,9 +537,9 @@ const Plans = () => {
           showNotification("You've already claimed your free trial. Upgrade to a paid plan for continued access.", 'info');
           return;
         }
-        // For eligible users, show the plan notification
+        // For eligible users, directly create the free trial booking
         setSelectedPlan(plan);
-        setShowPlanNotification(true);
+        handleFreeTrialBooking();
       } else {
         // For paid plans in dashboard, go directly to payment WITHOUT showing any notification
         setSelectedPlan(plan);
@@ -201,26 +558,89 @@ const Plans = () => {
     try {
       const user = getCurrentUser();
       if (user && selectedPlan) {
+        // Get the selected event from localStorage if it exists
+        const selectedEventStr = localStorage.getItem('selectedEvent');
+        let eventInfo = null;
+        if (selectedEventStr) {
+          try {
+            eventInfo = JSON.parse(selectedEventStr);
+          } catch (e) {
+            console.error('Error parsing selected event:', e);
+          }
+        }
+        
+        // Prepare booking data - USE ACTUAL EVENT ID IF AVAILABLE
         const bookingData = {
-          eventName: selectedPlan.name,
-          eventDate: new Date(), // In a real implementation, you might want to set a specific date
+          eventName: eventInfo ? eventInfo.name || eventInfo.title : selectedPlan.name,
+          eventId: eventInfo ? String(eventInfo.id) : `plan_${selectedPlan.name.toLowerCase().replace(/\s+/g, '_')}`,
+          eventDate: eventInfo ? new Date(eventInfo.date) : new Date(),
+          eventTime: eventInfo ? eventInfo.time : '',
+          eventLocation: eventInfo ? eventInfo.location : '',
           status: 'confirmed',
           amount: selectedPlan.price,
           paymentId: response.razorpay_payment_id || response.razorpay_order_id,
-          mode: 'razorpay'
+          mode: 'razorpay',
+          userId: user.uid,
+          userEmail: user.email,
+          userName: user.name,
+          phoneNumber: user.phoneNumber,
+          bookingDate: new Date()
         };
         
-        await firebaseService.createBooking(user.uid, bookingData);
-        console.log('Booking created successfully');
+        // Create the booking in Firestore
+        const result = await firebaseService.createBooking(user.uid, bookingData);
+        console.log('Booking created successfully with ID:', result.bookingId);
+        
+        // Add the booking ID to the booking data for storage
+        const bookingDataWithId = {
+          ...bookingData,
+          id: result.bookingId
+        };
+        
+        // Clear the selected event from localStorage
+        localStorage.removeItem('selectedEvent');
+        
+        // Set flags in localStorage to indicate that bookings should be refreshed
+        localStorage.setItem('refreshBookings', 'true');
+        localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
+        localStorage.setItem('eventsUpdated', 'true');
+        
+        // Store booking data for ticket display
+        localStorage.setItem('latestBooking', JSON.stringify(bookingDataWithId));
+        
+        // Store in a global key that both pages will check
+        localStorage.setItem('latestEventBooking', JSON.stringify({
+          eventId: bookingData.eventId,
+          bookingId: result.bookingId,
+          timestamp: Date.now()
+        }));
+        
+        // Update eventBookings in localStorage to include the new booking
+        const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+        const updatedBookings = [...localBookings, bookingDataWithId];
+        localStorage.setItem('eventBookings', JSON.stringify(updatedBookings));
+        
+        // Force immediate refresh by directly updating localStorage values
+        localStorage.setItem('forceRefresh', 'true');
       }
     } catch (error) {
       console.error('Error creating booking:', error);
       // Even if booking creation fails, we still want to show success message
     }
     
-    // Show success notification using in-app notification
+    // Set the purchased plan
+    setPurchasedPlan(selectedPlan?.name || 'Unknown Plan');
+    
+    // Close the payment modal and show success notification
+    closeModal();
     showNotification('Payment successful! Thank you for your purchase.', 'success');
-    // Here you would typically redirect to a success page or update the UI
+    
+    // Redirect to dashboard where user can see their ticket
+    setTimeout(() => {
+      // Use window.location instead of navigate to ensure full page refresh
+      window.location.href = '/dashboard';
+    }, 1500);
+
   };
 
   // Handle failed payment
@@ -263,7 +683,7 @@ const Plans = () => {
         />
       )}
       
-      {showPlanNotification && selectedPlan && (
+      {showPlanNotification && selectedPlan && !selectedPlan.freeTrial && (
         <PlanNotification
           plan={selectedPlan}
           onSignUpClick={handleSignUpClick}
@@ -355,12 +775,17 @@ const Plans = () => {
               
               <div className="plan-footer">
                 <button
-                  className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${plan.freeTrial && !isEligibleForFreeTrial ? 'disabled' : ''}`}
+                  className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${plan.freeTrial && !isEligibleForFreeTrial ? 'disabled' : ''} ${!plan.freeTrial && (hasBookedThisWeek(plan.name) || purchasedPlan) ? 'disabled' : ''}`}
                   onClick={() => handlePayNow(plan)}
-                  disabled={plan.freeTrial && !isEligibleForFreeTrial}
+                  disabled={plan.freeTrial && !isEligibleForFreeTrial || (!plan.freeTrial && (hasBookedThisWeek(plan.name) || purchasedPlan))}
                 >
                   <span className="button-text">
-                    {plan.freeTrial ? (isEligibleForFreeTrial ? "Start Free Trial" : "Already Claimed") : "Choose Plan"}
+                    {plan.freeTrial ? (isEligibleForFreeTrial ? "Start Free Trial" : "Already Claimed") : 
+                     (purchasedPlan ? 
+                       (purchasedPlan === 'Monthly Membership' ? "Booked for a month" : "Booked for this week") : 
+                       (hasBookedThisWeek(plan.name) ? 
+                         (plan.name === 'Monthly Membership' ? "Booked for a month" : "Booked for this week") : 
+                         "Choose Plan"))}
                   </span>
                   <div className="button-arrow">→</div>
                 </button>
@@ -377,7 +802,7 @@ const Plans = () => {
             <div className="modal-header">
               <div className="modal-title-section">
                 <h3>Complete Your Purchase</h3>
-                <p>Choose your preferred payment method</p>
+                <p>Secure payment with Razorpay</p>
               </div>
               <button className="close-button" onClick={closeModal}>
                 <FaTimes />
@@ -389,7 +814,7 @@ const Plans = () => {
                 <div className="plan-summary">
                   <div className="plan-info">
                     <h4>{selectedPlan?.name}</h4>
-                    <p>{selectedPlan?.subtitle}</p>
+                    <p>{selectedPlan?.subtitle || 'Subscription Plan'}</p>
                   </div>
                   <div className="price-summary">
                     {selectedPlan?.originalPrice && (
@@ -409,36 +834,50 @@ const Plans = () => {
               
               {/* Razorpay Payment Integration */}
               <div className="payment-methods-section">
-                <h5>PAYMENT METHODS*</h5>
+                <h5>PAYMENT METHOD</h5>
                 <div className="payment-grid">
-                  {/* Use the PaymentButton component for actual payment processing */}
-                  <div className="payment-method-card">
-                    <div className="method-icon">
-                      <FaCreditCard />
+                  {/* Credit/Debit Card Payment Method */}
+                  <div className="payment-method-card credit-card-method">
+                    <div className="method-header">
+                      <div className="method-icon">
+                        <FaCreditCard />
+                      </div>
+                      <div className="method-details">
+                        <span className="method-name">Credit/Debit Card</span>
+                        <span className="method-description">Pay securely with your card</span>
+                      </div>
                     </div>
-                    <span className="method-name">Credit/Debit Card</span>
-                    <PaymentButton
-                      amount={parseInt(selectedPlan?.price)}
-                      eventName={selectedPlan?.name}
-                      eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}`}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentFailure={handlePaymentFailure}
-                    />
+                    <div className="method-footer">
+                      <PaymentButton
+                        amount={parseInt(selectedPlan?.price)}
+                        eventName={selectedPlan?.name}
+                        eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}`}
+                        onPaymentSuccess={handlePaymentSuccess}
+                        onPaymentFailure={handlePaymentFailure}
+                      />
+                    </div>
                   </div>
                   
-                  {/* Add QR Payment option */}
-                  <div className="payment-method-card">
-                    <div className="method-icon">
-                      <FaQrcode />
+                  {/* UPI Payment Method */}
+                  <div className="payment-method-card upi-method">
+                    <div className="method-header">
+                      <div className="method-icon">
+                        <FaQrcode />
+                      </div>
+                      <div className="method-details">
+                        <span className="method-name">UPI Payment</span>
+                        <span className="method-description">Pay instantly using any UPI app</span>
+                      </div>
                     </div>
-                    <span className="method-name">QR Code Payment</span>
-                    <QRPayment
-                      amount={parseInt(selectedPlan?.price)}
-                      eventName={selectedPlan?.name}
-                      eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}`}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentFailure={handlePaymentFailure}
-                    />
+                    <div className="method-footer">
+                      <PaymentButton
+                        amount={parseInt(selectedPlan?.price)}
+                        eventName={selectedPlan?.name}
+                        eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}_upi`}
+                        onPaymentSuccess={handlePaymentSuccess}
+                        onPaymentFailure={handlePaymentFailure}
+                      />
+                    </div>
                   </div>
                 </div>
                 

@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-scroll';
 import './Popup.css'; // Make sure this CSS file is imported
 
 const Popup = () => {
@@ -34,18 +33,15 @@ const Popup = () => {
         <button className="close-btn" onClick={closePopup}>&times;</button>
         <h2>Your First Run is FREE!</h2>
         <p>Limited spots. Don’t miss out! Register now & lock in your spot!</p>
-        {/* You can make this a link or a button */}
-        <Link
-          to="register"
-          spy={true}
-          smooth={true}
-          offset={-70}
-          duration={500}
+        <button
           className="register-button"
-          onClick={closePopup}
+          onClick={() => {
+            document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+            closePopup();
+          }}
         >
           REGISTER NOW
-        </Link>
+        </button>
       </div>
     </div>
   );

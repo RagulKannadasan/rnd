@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { RecaptchaVerifier, signInWithPhoneNumber, updateProfile } from "firebase/auth";
 import { auth } from "../../firebase";
 import firebaseService from "../../services/firebaseService";
-import Notification from "../Notification/Notification";
 import "./SignUp.css";
 
 const SignUp = () => {
@@ -11,96 +11,31 @@ const SignUp = () => {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [confirmationResult, setConfirmationResult] = useState(null);
-  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
-  const recaptchaContainerRef = useRef(null);
 
   useEffect(() => {
-    // Clean up previous recaptcha verifier if it exists
-    if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear();
-      window.recaptchaVerifier = null;
-    }
-    
-    // Initialize recaptcha after component mount when DOM is ready
-    const initRecaptcha = () => {
-      try {
-        // Check if container element exists
-        if (!recaptchaContainerRef.current) {
-          console.warn("Recaptcha container not found, retrying...");
-          setTimeout(initRecaptcha, 100);
-          return;
-        }
-        
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-          'size': 'invisible',
-          'callback': (response) => {
-            // reCAPTCHA solved, allow signInWithPhoneNumber.
-            console.log("Recaptcha verified");
-          },
-          'expired-callback': () => {
-            // Response expired, reset the recaptcha
-            console.log("Recaptcha expired");
-            showNotification("Recaptcha expired. Please try again.", "error");
-          },
-          'error-callback': (error) => {
-            console.error("Recaptcha error:", error);
-            showNotification("Recaptcha error. Please refresh the page and try again.", "error");
-          }
-        });
-      } catch (error) {
-        console.error("Error initializing RecaptchaVerifier:", error);
-        showNotification("Failed to initialize reCAPTCHA. Please check your internet connection and refresh the page.", "error");
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      'size': 'invisible',
+      'callback': (response) => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber.
       }
-    };
-    
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(initRecaptcha, 100);
-    
-    // Cleanup function
-    return () => {
-      clearTimeout(timer);
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
-    };
+    });
   }, []);
-
-  const showNotification = (message, type = 'info') => {
-    setNotification({ message, type });
-  };
-
-  const closeNotification = () => {
-    setNotification(null);
-  };
 
   const handleGetOtp = async () => {
     if (!phone || phone.length !== 10) {
-      showNotification("Please enter a valid 10-digit phone number.", "error");
+      alert("Please enter a valid 10-digit phone number.");
       return;
     }
-    
     try {
-      // Check if phone number already exists
-      const phoneExists = await firebaseService.isPhoneNumberExists(phone);
-      if (phoneExists) {
-        showNotification("This phone number is already registered. Redirecting to sign in...", "warning");
-        // Navigate to sign in page after a short delay
-        setTimeout(() => {
-          navigate("/SignIn");
-        }, 2000);
-        return;
-      }
-      
       const appVerifier = window.recaptchaVerifier;
       const phoneNumber = `+91${phone}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       setConfirmationResult(confirmation);
-      showNotification("✅ OTP sent successfully!", "success");
+      alert("✅ OTP sent successfully!");
     } catch (error) {
       console.error("Error sending OTP:", error);
-      showNotification("❌ " + (error.message || "Failed to send OTP."), "error");
+      alert("❌ " + (error.message || "Failed to send OTP."));
     }
   };
 
@@ -109,7 +44,7 @@ const SignUp = () => {
     setSubmitting(true);
 
     if (!confirmationResult) {
-      showNotification("Please get an OTP first.", "error");
+      alert("Please get an OTP first.");
       setSubmitting(false);
       return;
     }
@@ -151,12 +86,12 @@ const SignUp = () => {
       // Register user in Firestore
       await firebaseService.saveUserProfile(user.uid, userData);
 
-      showNotification("✅ User registered successfully!", "success");
+      alert("✅ User registered successfully!");
       e.target.reset();
       navigate("/dashboard");
     } catch (error) {
       console.error("Error confirming OTP or registering user:", error);
-      showNotification("❌ " + (error.message || "Failed to sign up."), "error");
+      alert("❌ " + (error.message || "Failed to sign up."));
     } finally {
       setSubmitting(false);
     }
@@ -174,13 +109,6 @@ const SignUp = () => {
   return (
     <div className="register-wrapper">
       <div id="recaptcha-container"></div>
-      {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={closeNotification}
-        />
-      )}
       <div className="form-box">
         <div className="logo">
           <img src="redlogo.png" alt="logo" className="logo-img" />
