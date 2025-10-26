@@ -55,9 +55,9 @@ function UserEventsPage() {
   }, [lastRefresh]); // Add lastRefresh as dependency
 
   // Fetch the main upcoming event
-  const fetchMainEvent = async () => {
-    // This function is now handled within fetchEvents
-  };
+  // const fetchMainEvent = async () => {
+  //   // This function is now handled within fetchEvents
+  // };
 
   // Check for refresh flag
   useEffect(() => {
@@ -726,7 +726,7 @@ function UserEventsPage() {
                            checkTodaysBookingFromStorage(event.id) ? 'Already Booked Today' : 
                            hasUserBookedToday(event.id, event.date) ? 'Already Booked Today' : 
                            hasUserBookedEvent(event.id, event.date) ? 'Already Booked' : 
-                           (hasBookedThisWeek('Pay-Per-Run') || hasBookedThisWeek('Monthly Membership')) ? 'Already Booked' :
+                           ((hasBookedThisWeek('Pay-Per-Run') || hasBookedThisWeek('Monthly Membership'))) ? 'Already Booked' :
                            'Book Your Slot'}
                         </button>
                       </div>

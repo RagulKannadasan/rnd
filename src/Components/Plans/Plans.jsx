@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./Plans.css";
-import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar,  FaQrcode, FaLock } from "react-icons/fa";
+import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar,  FaQrcode } from "react-icons/fa";
 import { Element } from 'react-scroll';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -224,51 +224,51 @@ const Plans = () => {
   }, []);
 
   // Function to check if user has booked a monthly plan
-  const hasBookedMonthly = useCallback(() => {
-    // Get bookings from localStorage
-    const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+  // const hasBookedMonthly = useCallback(() => {
+  //   // Get bookings from localStorage
+  //   const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
     
-    if (!localBookings || localBookings.length === 0) {
-      return false;
-    }
+  //   if (!localBookings || localBookings.length === 0) {
+  //     return false;
+  //   }
     
-    // Get today's date for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  //   // Get today's date for comparison
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
     
-    // Get start of month
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    startOfMonth.setHours(0, 0, 0, 0);
+  //   // Get start of month
+  //   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  //   startOfMonth.setHours(0, 0, 0, 0);
     
-    // Get end of month
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    endOfMonth.setHours(23, 59, 59, 999);
+  //   // Get end of month
+  //   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  //   endOfMonth.setHours(23, 59, 59, 999);
     
-    // Check if any booking was made this month for Monthly Membership only
-    return localBookings.some(booking => {
-      // Check if booking is for Monthly Membership
-      if (booking.eventName !== 'Monthly Membership') {
-        return false;
-      }
+  //   // Check if any booking was made this month for Monthly Membership only
+  //   return localBookings.some(booking => {
+  //     // Check if booking is for Monthly Membership
+  //     if (booking.eventName !== 'Monthly Membership') {
+  //       return false;
+  //     }
       
-      // Check if booking was made this month
-      const bookingDate = booking.bookingDate || booking.createdAt;
-      if (bookingDate) {
-        let bookingTime;
-        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-          bookingTime = bookingDate.toDate();
-        } else if (bookingDate instanceof Date) {
-          bookingTime = bookingDate;
-        } else {
-          bookingTime = new Date(bookingDate);
-        }
+  //     // Check if booking was made this month
+  //     const bookingDate = booking.bookingDate || booking.createdAt;
+  //     if (bookingDate) {
+  //       let bookingTime;
+  //       if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+  //         bookingTime = bookingDate.toDate();
+  //       } else if (bookingDate instanceof Date) {
+  //         bookingTime = bookingDate;
+  //       } else {
+  //         bookingTime = new Date(bookingDate);
+  //       }
         
-        return bookingTime >= startOfMonth && bookingTime <= endOfMonth;
-      }
+  //       return bookingTime >= startOfMonth && bookingTime <= endOfMonth;
+  //     }
       
-      return false;
-    });
-  }, []);
+  //     return false;
+  //   });
+  // }, []);
 
   // Check free trial eligibility when component mounts and user changes
   useEffect(() => {
