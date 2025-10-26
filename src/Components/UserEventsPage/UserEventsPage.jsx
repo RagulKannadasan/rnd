@@ -18,7 +18,7 @@ function UserEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(Date.now()); // Add refresh tracking
-  const [mainEvent, setMainEvent] = useState(null); // Main event from Firebase
+  // const [mainEvent, setMainEvent] = useState(null); // Main event from Firebase
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -371,7 +371,6 @@ function UserEventsPage() {
         console.log('Comparing with booking event ID:', bookingEventIdStr);
         // Use multiple comparison methods for better compatibility
         if (bookingEventIdStr === targetEventId || 
-            bookingEventIdStr == targetEventId ||
             bookingEventIdStr.trim() === targetEventId.trim()) {
           
           // If eventDate is provided, also check if the booking is for the same date
@@ -715,11 +714,13 @@ function UserEventsPage() {
                         <button 
                           className="register-btn"
                           onClick={() => handleRegister(event)}
-                          disabled={hasUserBookedEvent(event.id, event.date) || 
-                                   checkTodaysBookingFromStorage(event.id) || 
-                                   isBookingClosed(event) ||
-                                   hasBookedThisWeek('Pay-Per-Run') ||
-                                   hasBookedThisWeek('Monthly Membership')}
+                          disabled={
+                            hasUserBookedEvent(event.id, event.date) ||
+                            checkTodaysBookingFromStorage(event.id) ||
+                            isBookingClosed(event) ||
+                            hasBookedThisWeek('Pay-Per-Run') ||
+                            hasBookedThisWeek('Monthly Membership')
+                          }
                         >
                           {isBookingClosed(event) ? 'Bookings Closed' :
                            checkTodaysBookingFromStorage(event.id) ? 'Already Booked Today' : 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./Plans.css";
-import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar, FaLock, FaQrcode } from "react-icons/fa";
+import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar,  FaQrcode, FaLock } from "react-icons/fa";
 import { Element } from 'react-scroll';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -777,7 +777,10 @@ const Plans = () => {
                 <button
                   className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${plan.freeTrial && !isEligibleForFreeTrial ? 'disabled' : ''} ${!plan.freeTrial && (hasBookedThisWeek(plan.name) || purchasedPlan) ? 'disabled' : ''}`}
                   onClick={() => handlePayNow(plan)}
-                  disabled={plan.freeTrial && !isEligibleForFreeTrial || (!plan.freeTrial && (hasBookedThisWeek(plan.name) || purchasedPlan))}
+                  disabled={
+                    (plan.freeTrial && !isEligibleForFreeTrial) ||
+                    (!plan.freeTrial && (hasBookedThisWeek(plan.name) || purchasedPlan))
+                  }
                 >
                   <span className="button-text">
                     {plan.freeTrial ? (isEligibleForFreeTrial ? "Start Free Trial" : "Already Claimed") : 
