@@ -17,8 +17,8 @@ const Payments = () => {
   const [event, setEvent] = useState(null);
   const [isEligibleForFreeTrial, setIsEligibleForFreeTrial] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [setPaymentMethod] = useState('card');
-  const [setPaymentDetails] = useState({
+  // const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentDetails, setPaymentDetails] = useState({
     cardNumber: '',
     expiryDate: '',
     cvv: '',
