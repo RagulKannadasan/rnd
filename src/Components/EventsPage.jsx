@@ -269,7 +269,6 @@ function EventsPage() {
         console.log('Comparing with booking event ID:', bookingEventIdStr);
         // Use multiple comparison methods for better compatibility
         if (bookingEventIdStr === targetEventId || 
-            bookingEventIdStr == targetEventId ||
             bookingEventIdStr.trim() === targetEventId.trim()) {
           
           // If eventDate is provided, also check if the booking is for the same date

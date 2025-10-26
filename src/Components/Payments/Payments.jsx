@@ -17,8 +17,8 @@ const Payments = () => {
   const [event, setEvent] = useState(null);
   const [isEligibleForFreeTrial, setIsEligibleForFreeTrial] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState('card');
-  const [paymentDetails, setPaymentDetails] = useState({
+  const [setPaymentMethod] = useState('card');
+  const [setPaymentDetails] = useState({
     cardNumber: '',
     expiryDate: '',
     cvv: '',
@@ -178,7 +178,7 @@ const Payments = () => {
         status: 'confirmed',
         isFreeTrial: isEligibleForFreeTrial,
         amount: isEligibleForFreeTrial ? 0 : 100, // Assuming ₹100 for paid events
-        paymentMethod: isEligibleForFreeTrial ? 'free_trial' : paymentMethod
+        paymentMethod: isEligibleForFreeTrial ? 'free_trial' : 'card'
       };
 
       console.log('Creating booking with data:', bookingData); // Debug log
