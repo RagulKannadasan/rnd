@@ -17,15 +17,15 @@ const Payments = () => {
   const [event, setEvent] = useState(null);
   const [isEligibleForFreeTrial, setIsEligibleForFreeTrial] = useState(false);
   const [loading, setLoading] = useState(true);
-  // const [paymentMethod, setPaymentMethod] = useState('card');
-  // const [paymentDetails, setPaymentDetails] = useState({
-  //   cardNumber: '',
-  //   expiryDate: '',
-  //   cvv: '',
-  //   name: '',
-  //   upiId: '',
-  //   bank: ''
-  // });
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentDetails, setPaymentDetails] = useState({
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    name: '',
+    upiId: '',
+    bank: ''
+  });
   const [processing, setProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [bookingData, setBookingData] = useState(null);
@@ -134,13 +134,13 @@ const Payments = () => {
     }
   };
 
-  // const handlePaymentDetailsChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setPaymentDetails(prev => ({
-  //     ...prev,
-  //     [name]: value
-  //   }));
-  // };
+  const handlePaymentDetailsChange = (e) => {
+    const { name, value } = e.target;
+    setPaymentDetails(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const showNotification = (message, type = 'info') => {
     setNotification({ message, type });
@@ -178,7 +178,7 @@ const Payments = () => {
         status: 'confirmed',
         isFreeTrial: isEligibleForFreeTrial,
         amount: isEligibleForFreeTrial ? 0 : 100, // Assuming ₹100 for paid events
-        paymentMethod: isEligibleForFreeTrial ? 'free_trial' : 'card'
+        paymentMethod: isEligibleForFreeTrial ? 'free_trial' : paymentMethod
       };
 
       console.log('Creating booking with data:', bookingData); // Debug log
@@ -334,42 +334,42 @@ const Payments = () => {
     }
   };
 
-  // const formatCardNumber = (value) => {
-  //   // Remove all non-digit characters
-  //   const digits = value.replace(/\D/g, '');
+  const formatCardNumber = (value) => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, '');
     
-  //   // Format as XXXX XXXX XXXX XXXX
-  //   let formatted = '';
-  //   for (let i = 0; i < digits.length; i++) {
-  //     if (i > 0 && i % 4 === 0) {
-  //       formatted += ' ';
-  //     }
-  //     formatted += digits[i];
-  //   }
+    // Format as XXXX XXXX XXXX XXXX
+    let formatted = '';
+    for (let i = 0; i < digits.length; i++) {
+      if (i > 0 && i % 4 === 0) {
+        formatted += ' ';
+      }
+      formatted += digits[i];
+    }
     
-  //   return formatted;
-  // };
+    return formatted;
+  };
 
-  // const handleCardNumberChange = (e) => {
-  //   const formatted = formatCardNumber(e.target.value);
-  //   setPaymentDetails(prev => ({
-  //     ...prev,
-  //     cardNumber: formatted
-  //   }));
-  // };
+  const handleCardNumberChange = (e) => {
+    const formatted = formatCardNumber(e.target.value);
+    setPaymentDetails(prev => ({
+      ...prev,
+      cardNumber: formatted
+    }));
+  };
 
-  // const handleExpiryChange = (e) => {
-  //   let value = e.target.value.replace(/\D/g, '');
+  const handleExpiryChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
     
-  //   if (value.length >= 2) {
-  //     value = value.substring(0, 2) + '/' + value.substring(2, 4);
-  //   }
+    if (value.length >= 2) {
+      value = value.substring(0, 2) + '/' + value.substring(2, 4);
+    }
     
-  //   setPaymentDetails(prev => ({
-  //     ...prev,
-  //     expiryDate: value
-  //   }));
-  // };
+    setPaymentDetails(prev => ({
+      ...prev,
+      expiryDate: value
+    }));
+  };
 
   // NEW: Function to download ticket as PDF (import jsPDF only when needed)
   const downloadTicketAsPDF = async () => {

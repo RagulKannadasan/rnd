@@ -33,7 +33,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="register-container" id="contact">
+    <div className="register-container">
       {notification && (
         <Notification
           message={notification.message}
