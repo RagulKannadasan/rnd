@@ -8,7 +8,13 @@ const crypto = require('crypto');
 // Initialize Firebase Admin SDK
 let admin;
 try {
-  const serviceAccount = require('./firebase-service-account.json');
+  let serviceAccount;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } else {
+    serviceAccount = require('./firebase-service-account.json');
+  }
+
   admin = require('firebase-admin');
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
