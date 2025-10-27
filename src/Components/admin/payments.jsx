@@ -17,34 +17,6 @@ const Payments = () => {
   const [updatingPayment, setUpdatingPayment] = useState(null); // Track which payment is being updated
   const [notification, setNotification] = useState(null); // For in-app notifications
 
-  // Function to fetch user details by ID
-  const fetchUserDetailsById = useCallback(async (userId) => {
-    // Check cache first
-    if (userCache[userId]) {
-      return userCache[userId];
-    }
-    
-    try {
-      const userDocRef = doc(db, 'users', userId);
-      const userDoc = await getDoc(userDocRef);
-      
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        // Cache the result
-        setUserCache(prev => ({
-          ...prev,
-          [userId]: userData
-        }));
-        return userData;
-      } else {
-        console.log('User not found for ID:', userId);
-      }
-    } catch (error) {
-      console.error('Error fetching user details for ID:', userId, error);
-    }
-    return null;
-  }, [userCache]);
-
   const fetchPayments = useCallback(async () => {
     try {
       setLoading(true);
@@ -142,37 +114,11 @@ const Payments = () => {
     if (payments.length > 0) {
       fetchUserDetails();
     }
-  }, [payments, userCache, fetchUserDetailsById]);
+  }, [payments, userCache]);
 
   useEffect(() => {
     fetchPayments();
   }, [fetchPayments]);
-  
-  // Function to fetch actual payment method from Razorpay
-  const fetchPaymentMethodDetails = useCallback(async (paymentId) => {
-    // Check cache first
-    if (paymentMethodCache[paymentId]) {
-      return paymentMethodCache[paymentId];
-    }
-    
-    try {
-      const response = await fetch(getApiUrl(`/api/payment-details/${paymentId}`));
-      if (response.ok) {
-        const data = await response.json();
-        // Cache the result
-        setPaymentMethodCache(prev => ({
-          ...prev,
-          [paymentId]: data.paymentMethodDetails
-        }));
-        return data.paymentMethodDetails;
-      } else {
-        console.log('Failed to fetch payment details for ID:', paymentId, 'Status:', response.status);
-      }
-    } catch (error) {
-      console.error('Error fetching payment method details for ID:', paymentId, error);
-    }
-    return null;
-  }, [paymentMethodCache]);
 
   // Fetch payment method details for Razorpay payments
   useEffect(() => {
@@ -199,7 +145,35 @@ const Payments = () => {
     if (payments.length > 0) {
       fetchAllPaymentMethodDetails();
     }
-  }, [payments, paymentMethodCache, fetchPaymentMethodDetails]);
+  }, [payments, paymentMethodCache]);
+
+  // Function to fetch user details by ID
+  const fetchUserDetailsById = async (userId) => {
+    // Check cache first
+    if (userCache[userId]) {
+      return userCache[userId];
+    }
+    
+    try {
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        // Cache the result
+        setUserCache(prev => ({
+          ...prev,
+          [userId]: userData
+        }));
+        return userData;
+      } else {
+        console.log('User not found for ID:', userId);
+      }
+    } catch (error) {
+      console.error('Error fetching user details for ID:', userId, error);
+    }
+    return null;
+  };
 
   // Filter payments based on status and payment method
   const filteredPayments = payments.filter(payment => {
@@ -286,7 +260,31 @@ const Payments = () => {
            method.charAt(0).toUpperCase() + method.slice(1).replace(/_/g, ' ');
   };
 
-
+  // Function to fetch actual payment method from Razorpay
+  const fetchPaymentMethodDetails = async (paymentId) => {
+    // Check cache first
+    if (paymentMethodCache[paymentId]) {
+      return paymentMethodCache[paymentId];
+    }
+    
+    try {
+      const response = await fetch(getApiUrl(`/api/payment-details/${paymentId}`));
+      if (response.ok) {
+        const data = await response.json();
+        // Cache the result
+        setPaymentMethodCache(prev => ({
+          ...prev,
+          [paymentId]: data.paymentMethodDetails
+        }));
+        return data.paymentMethodDetails;
+      } else {
+        console.log('Failed to fetch payment details for ID:', paymentId, 'Status:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching payment method details for ID:', paymentId, error);
+    }
+    return null;
+  };
 
   // Function to determine display name for payment method
   const getPaymentMethodDisplayName = (payment) => {
