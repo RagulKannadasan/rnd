@@ -18,7 +18,6 @@ function UserEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(Date.now()); // Add refresh tracking
-  const [mainEvent, setMainEvent] = useState(null); // Main event from Firebase
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -53,11 +52,6 @@ function UserEventsPage() {
   useEffect(() => {
     fetchEvents();
   }, [lastRefresh]); // Add lastRefresh as dependency
-
-  // Fetch the main upcoming event
-  const fetchMainEvent = async () => {
-    // This function is now handled within fetchEvents
-  };
 
   // Check for refresh flag
   useEffect(() => {
@@ -325,75 +319,6 @@ function UserEventsPage() {
     });
   }, []);
 
-  // New function to check if user booked today (regardless of event)
-  const hasUserBookedToday = (eventId, eventDate) => {
-    if (!userBookings || userBookings.length === 0) {
-      return false;
-    }
-
-    const targetEventId = String(eventId);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Check if any booking was made today
-    return userBookings.some(booking => {
-      // First check if the booking is for the target event
-      let isTargetEvent = false;
-      
-      // Check multiple possible field names
-      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
-      if (bookingEventId) {
-        isTargetEvent = String(bookingEventId) === targetEventId;
-      }
-      
-      // If this booking is not for the target event, skip it
-      if (!isTargetEvent) {
-        return false;
-      }
-      
-      // If eventDate is provided, also check if the booking is for the same date
-      if (eventDate) {
-        const bookingEventDate = booking.eventDate;
-        if (bookingEventDate) {
-          let bookingDate;
-          if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
-            bookingDate = bookingEventDate.toDate();
-          } else if (bookingEventDate instanceof Date) {
-            bookingDate = bookingEventDate;
-          } else {
-            bookingDate = new Date(bookingEventDate);
-          }
-          
-          // Compare dates
-          const eventDateObj = new Date(eventDate);
-          if (bookingDate.toDateString() !== eventDateObj.toDateString()) {
-            // Different date, so not the same event instance
-            return false;
-          }
-        }
-      }
-      
-      // Now check if the booking was made today
-      const bookingCreationDate = booking.bookingDate || booking.createdAt;
-      if (bookingCreationDate) {
-        let bookingTime;
-        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
-          bookingTime = bookingCreationDate.toDate();
-        } else if (bookingCreationDate instanceof Date) {
-          bookingTime = bookingCreationDate;
-        } else {
-          bookingTime = new Date(bookingCreationDate);
-        }
-        
-        bookingTime.setHours(0, 0, 0, 0);
-        
-        return bookingTime.getTime() === today.getTime();
-      }
-      
-      return false;
-    });
-  };
-
   // Function to check for today's bookings from localStorage (immediate feedback after payment)
   const checkTodaysBookingFromStorage = (eventId) => {
     const latestBooking = localStorage.getItem('latestBooking');
@@ -496,7 +421,6 @@ function UserEventsPage() {
         console.log('Comparing with booking event ID:', bookingEventIdStr);
         // Use multiple comparison methods for better compatibility
         if (bookingEventIdStr === targetEventId || 
-            bookingEventIdStr == targetEventId ||
             bookingEventIdStr.trim() === targetEventId.trim()) {
           
           // If eventDate is provided, also check if the booking is for the same date

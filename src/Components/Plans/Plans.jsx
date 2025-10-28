@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./Plans.css";
-import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar, FaLock, FaQrcode } from "react-icons/fa";
+import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar, FaQrcode } from "react-icons/fa";
 import { Element } from 'react-scroll';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -30,15 +30,6 @@ const isEventDatePassed = (eventDate) => {
   eventTime.setHours(0, 0, 0, 0);
   
   return eventTime < today;
-};
-
-// Utility function to check if a booking is still valid (event hasn't passed)
-const isBookingStillValid = (booking) => {
-  // If there's no event date, consider it valid
-  if (!booking.eventDate) return true;
-  
-  // Check if the event date has passed
-  return !isEventDatePassed(booking.eventDate);
 };
 
 const Plans = () => {
@@ -178,50 +169,6 @@ const Plans = () => {
       
       // Check if booking matches the plan name
       if (booking.eventName !== planName) {
-        return false;
-      }
-      
-      // Check if booking was made within the last 24 hours
-      const bookingDate = booking.bookingDate || booking.createdAt;
-      if (bookingDate) {
-        let bookingTime;
-        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-          bookingTime = bookingDate.toDate();
-        } else if (bookingDate instanceof Date) {
-          bookingTime = bookingDate;
-        } else {
-          bookingTime = new Date(bookingDate);
-        }
-        
-        return bookingTime >= twentyFourHoursAgo && bookingTime <= now;
-      }
-      
-      return false;
-    });
-  }, []);
-
-  // Function to check if user has booked a monthly plan within the last 24 hours (excluding free trials)
-  const hasBookedMonthlyRecently = useCallback(() => {
-    // Get bookings from localStorage
-    const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-    
-    if (!localBookings || localBookings.length === 0) {
-      return false;
-    }
-    
-    // Get current time for comparison
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
-    
-    // Check if any booking was made within the last 24 hours for Monthly Membership (excluding free trials)
-    return localBookings.some(booking => {
-      // Skip free trial bookings
-      if (booking.mode === 'free_trial') {
-        return false;
-      }
-      
-      // Check if booking is for Monthly Membership
-      if (booking.eventName !== 'Monthly Membership') {
         return false;
       }
       
@@ -825,7 +772,7 @@ const Plans = () => {
                 <button
                   className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${plan.freeTrial && !isEligibleForFreeTrial ? 'disabled' : ''} ${!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan) ? 'disabled' : ''}`}
                   onClick={() => handlePayNow(plan)}
-                  disabled={plan.freeTrial && !isEligibleForFreeTrial || (!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan))}
+                  disabled={(plan.freeTrial && !isEligibleForFreeTrial) || (!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan))}
                 >
                   <span className="button-text">
                     {plan.freeTrial ? (isEligibleForFreeTrial ? "Start Free Trial" : "Already Claimed") : 
