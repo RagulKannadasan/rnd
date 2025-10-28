@@ -40,28 +40,41 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware with CORS configuration for development
+// A more robust CORS configuration for development environments
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5003',
+  // Regex to dynamically match any port on your cloud workstation domain
+  /https?:\/\/\d+-firebase-rndgit-.*\.cloudworkstations\.dev/
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001', 
-    'http://localhost:5003',
-    // Local network IP for mobile testing
-    'http://192.168.1.21:3000',
-    // Ngrok URLs for mobile testing
-    'https://*.ngrok.io',
-    'https://*.ngrok-free.app',
-    // LocalTunnel URLs
-    'https://*.loca.lt',
-    // Serveo URLs
-    'https://*.serveo.net',
-    // Generic patterns for tunneling services
-    'https://*',
-    'http://*'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.some(allowedOrigin => {
+        if (typeof allowedOrigin === 'string') {
+            return allowedOrigin === origin;
+        }
+        if (allowedOrigin instanceof RegExp) {
+            return allowedOrigin.test(origin);
+        }
+        return false;
+    })) {
+      // If the origin is in the allowed list, reflect it in the header
+      return callback(null, true);
+    } else {
+      // Otherwise, disallow the request
+      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 }));
+
 app.use(express.json({ limit: '10mb' }));
 
 // Determine mode (test or live)
