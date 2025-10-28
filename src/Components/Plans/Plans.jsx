@@ -39,8 +39,11 @@ const Plans = () => {
   const [showPlanNotification, setShowPlanNotification] = useState(false);
   const [notification, setNotification] = useState(null);
   const [isEligibleForFreeTrial, setIsEligibleForFreeTrial] = useState(true); // Default to true for public pages
-  const [bookingsUpdated, setBookingsUpdated] = useState(0); // State to track booking updates
   const [purchasedPlan, setPurchasedPlan] = useState(null); // State to track which plan was purchased
+
+  const showNotification = (message, type = 'info') => {
+    setNotification({ message, type });
+  };
 
   const checkFreeTrialEligibility = useCallback(async (userId, phoneNumber) => {
     try {
@@ -48,288 +51,115 @@ const Plans = () => {
       const bookingsRef = collection(db, 'bookings');
       const userQuery = query(bookingsRef, where('userId', '==', userId), where('mode', '==', 'free_trial'));
       
-      // Create a promise with timeout for the user query
-      const userQueryWithTimeout = new Promise(async (resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error('Timeout while checking user bookings'));
-        }, 10000); // 10 second timeout
-        
-        try {
-          const result = await getDocs(userQuery);
-          clearTimeout(timeoutId);
-          resolve(result);
-        } catch (error) {
-          clearTimeout(timeoutId);
-          reject(error);
-        }
-      });
-      
-      const userQuerySnapshot = await userQueryWithTimeout;
+      const userQuerySnapshot = await getDocs(userQuery);
       
       if (!userQuerySnapshot.empty) {
-        // Check if any free trial booking is within the last 24 hours
-        const twentyFourHoursAgo = new Date();
-        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         
         const hasRecentFreeTrial = userQuerySnapshot.docs.some(doc => {
           const bookingData = doc.data();
-          const bookingDate = bookingData.bookingDate;
-          
-          if (bookingDate && typeof bookingDate.toDate === 'function') {
-            return bookingDate.toDate() > twentyFourHoursAgo;
-          } else if (bookingDate instanceof Date) {
-            return bookingDate > twentyFourHoursAgo;
-          } else {
-            const date = new Date(bookingDate);
-            return date > twentyFourHoursAgo;
-          }
+          const bookingDate = bookingData.bookingDate?.toDate ? bookingData.bookingDate.toDate() : new Date(bookingData.bookingDate);
+          return bookingDate > twentyFourHoursAgo;
         });
         
         setIsEligibleForFreeTrial(!hasRecentFreeTrial);
-        return !hasRecentFreeTrial;
+        return;
       }
       
       // Check if phone number has been used for a free trial within the last 24 hours
       if (phoneNumber) {
         const phoneQuery = query(bookingsRef, where('phoneNumber', '==', phoneNumber), where('mode', '==', 'free_trial'));
-        
-        // Create a promise with timeout for the phone query
-        const phoneQueryWithTimeout = new Promise(async (resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            reject(new Error('Timeout while checking phone number'));
-          }, 10000); // 10 second timeout
-          
-          try {
-            const result = await getDocs(phoneQuery);
-            clearTimeout(timeoutId);
-            resolve(result);
-          } catch (error) {
-            clearTimeout(timeoutId);
-            reject(error);
-          }
-        });
-        
-        const phoneQuerySnapshot = await phoneQueryWithTimeout;
+        const phoneQuerySnapshot = await getDocs(phoneQuery);
         
         if (!phoneQuerySnapshot.empty) {
-          // Check if any free trial booking is within the last 24 hours
-          const twentyFourHoursAgo = new Date();
-          twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+          const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
           
           const hasRecentFreeTrial = phoneQuerySnapshot.docs.some(doc => {
             const bookingData = doc.data();
-            const bookingDate = bookingData.bookingDate;
-            
-            if (bookingDate && typeof bookingDate.toDate === 'function') {
-              return bookingDate.toDate() > twentyFourHoursAgo;
-            } else if (bookingDate instanceof Date) {
-              return bookingDate > twentyFourHoursAgo;
-            } else {
-              const date = new Date(bookingDate);
-              return date > twentyFourHoursAgo;
-            }
+            const bookingDate = bookingData.bookingDate?.toDate ? bookingData.bookingDate.toDate() : new Date(bookingData.bookingDate);
+            return bookingDate > twentyFourHoursAgo;
           });
           
-          const eligible = !hasRecentFreeTrial;
-          setIsEligibleForFreeTrial(eligible);
-          return eligible;
+          setIsEligibleForFreeTrial(!hasRecentFreeTrial);
+          return;
         }
       }
       
       setIsEligibleForFreeTrial(true);
-      return true;
     } catch (error) {
       console.error('Error checking free trial eligibility:', error);
-      // On error (including timeout), default to eligible but show a warning
-      setIsEligibleForFreeTrial(true);
-      showNotification("There was a delay checking your eligibility. Please try again.", 'error');
-      return true;
+      setIsEligibleForFreeTrial(true); // Default to eligible on error
+      showNotification("Could not verify free trial eligibility. Please try again.", 'error');
     }
   }, []);
 
-  // Function to check if user has booked within the last 24 hours based on plan (excluding free trials)
   const hasBookedRecently = useCallback((planName) => {
-    // Get bookings from localStorage
     const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-    
-    if (!localBookings || localBookings.length === 0) {
-      return false;
-    }
-    
-    // Get current time for comparison
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
-    
-    // Check if any booking was made within the last 24 hours for this plan (excluding free trials)
+    if (!localBookings.length) return false;
+
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
     return localBookings.some(booking => {
-      // Skip free trial bookings
-      if (booking.mode === 'free_trial') {
+      if (booking.mode === 'free_trial' || booking.eventName !== planName) {
         return false;
       }
-      
-      // Check if booking matches the plan name
-      if (booking.eventName !== planName) {
-        return false;
-      }
-      
-      // Check if booking was made within the last 24 hours
-      const bookingDate = booking.bookingDate || booking.createdAt;
-      if (bookingDate) {
-        let bookingTime;
-        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-          bookingTime = bookingDate.toDate();
-        } else if (bookingDate instanceof Date) {
-          bookingTime = bookingDate;
-        } else {
-          bookingTime = new Date(bookingDate);
-        }
-        
-        return bookingTime >= twentyFourHoursAgo && bookingTime <= now;
-      }
-      
-      return false;
+      const bookingDate = booking.bookingDate?.toDate ? booking.bookingDate.toDate() : new Date(booking.bookingDate);
+      return bookingDate > twentyFourHoursAgo;
     });
   }, []);
 
-  // Check free trial eligibility when component mounts and user changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        // Check if we're on the dashboard page
-        const isOnDashboard = document.querySelector('.plans-page') !== null;
+        const isOnDashboard = !!document.querySelector('.plans-page');
         if (isOnDashboard) {
-          // Only check eligibility on dashboard pages
-          try {
-            await checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber || '');
-            
-            // Check if there's a recent booking to set purchasedPlan
-            const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-            if (localBookings.length > 0) {
-              // Filter out passed events
-              const activeBookings = localBookings.filter(booking => !isEventDatePassed(booking.eventDate));
-              
-              if (activeBookings.length > 0) {
-                // Get the most recent active booking
-                const mostRecentBooking = activeBookings.reduce((latest, current) => {
-                  const latestDate = new Date(latest.bookingDate || latest.createdAt);
-                  const currentDate = new Date(current.bookingDate || current.createdAt);
-                  return currentDate > latestDate ? current : latest;
-                });
-                
-                // Set the purchased plan based on the most recent active booking
-                setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
-              } else {
-                // All events have passed, reset purchased plan
-                setPurchasedPlan(null);
-              }
-            } else {
-              // No bookings, reset purchased plan
-              setPurchasedPlan(null);
-            }
-          } catch (error) {
-            console.error('Error in useEffect while checking eligibility:', error);
-            showNotification("There was an issue checking your plan eligibility. Please refresh the page.", 'error');
-          }
+          checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber);
         }
       } else {
-        // Reset eligibility for non-logged in users
         setIsEligibleForFreeTrial(true);
         setPurchasedPlan(null);
       }
     });
 
     return () => unsubscribe();
-  }, [checkFreeTrialEligibility, hasBookedRecently, bookingsUpdated]);
+  }, [checkFreeTrialEligibility]);
 
-  // Check for changes in bookings and events
   useEffect(() => {
     const checkForBookingChanges = () => {
-      // Update the state to trigger a re-render
-      setBookingsUpdated(prev => prev + 1);
-      
-      // Check if there's a new booking and set purchasedPlan if needed
-      const newBooking = localStorage.getItem('newBooking');
-      if (newBooking) {
+      const newBookingRaw = localStorage.getItem('newBooking');
+      if (newBookingRaw) {
         try {
-          const booking = JSON.parse(newBooking);
-          // Set the purchased plan regardless of event date
-          setPurchasedPlan(booking.eventName || 'Unknown Plan');
+          const newBooking = JSON.parse(newBookingRaw);
+          setPurchasedPlan(newBooking.eventName || 'Unknown Plan');
+          // No need to clear here, let other components use it and clear it
         } catch (e) {
-          console.error('Error parsing new booking:', e);
+          console.error('Error parsing new booking from localStorage:', e);
         }
       }
-      
-      // Check for event updates and reset purchasedPlan if events have changed
-      const eventsUpdated = localStorage.getItem('eventsUpdated');
-      if (eventsUpdated === 'true') {
-        // Reset purchased plan when events are updated
-        setPurchasedPlan(null);
-      }
-      
-      // Check if any booked events have passed and reset purchasedPlan if so
+
       const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
       if (localBookings.length > 0) {
-        // Check if any booked events have passed
-        const anyEventPassed = localBookings.some(booking => {
-          return isEventDatePassed(booking.eventDate);
-        });
-        
-        // If any events have passed, reset the purchased plan state
-        // This ensures plans reset when their associated events pass
-        if (anyEventPassed) {
+        const activeBookings = localBookings.filter(booking => !isEventDatePassed(booking.eventDate));
+        if (activeBookings.length > 0) {
+          const mostRecentBooking = activeBookings.reduce((latest, current) => {
+            const latestDate = new Date(latest.bookingDate || latest.createdAt);
+            const currentDate = new Date(current.bookingDate || current.createdAt);
+            return currentDate > latestDate ? current : latest;
+          });
+          setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
+        } else {
           setPurchasedPlan(null);
         }
       } else {
-        // No bookings, reset purchased plan
         setPurchasedPlan(null);
       }
-      
-      // Check if 24 hours have passed since last booking and reset purchasedPlan if so
-      const localBookings2 = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-      if (localBookings2.length > 0) {
-        // Get current time
-        const now = new Date();
-        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
-        
-        // Check if all bookings are older than 24 hours
-        const allBookingsOlder = localBookings2.every(booking => {
-          // Skip free trial bookings
-          if (booking.mode === 'free_trial') {
-            return true;
-          }
-          
-          const bookingDate = booking.bookingDate || booking.createdAt;
-          if (bookingDate) {
-            let bookingTime;
-            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-              bookingTime = bookingDate.toDate();
-            } else if (bookingDate instanceof Date) {
-              bookingTime = bookingDate;
-            } else {
-              bookingTime = new Date(bookingDate);
-            }
-            
-            return bookingTime < twentyFourHoursAgo;
-          }
-          
-          return true;
-        });
-        
-        // If all bookings are older than 24 hours, reset the purchased plan state
-        if (allBookingsOlder) {
-          setPurchasedPlan(null);
-        }
-      }
     };
-    
-    // Check immediately
-    checkForBookingChanges();
-    
-    // Check every 5 seconds
-    const interval = setInterval(checkForBookingChanges, 5000);
-    
+
+    checkForBookingChanges(); // Initial check
+    const interval = setInterval(checkForBookingChanges, 5000); // Check every 5 seconds
+
     return () => clearInterval(interval);
-  }, [bookingsUpdated]);
+  }, []);
 
   const plansData = [
     {
@@ -386,10 +216,6 @@ const Plans = () => {
     },
   ];
 
-  const showNotification = (message, type = 'info') => {
-    setNotification({ message, type });
-  };
-
   const closeNotification = () => {
     setNotification(null);
   };
@@ -406,8 +232,7 @@ const Plans = () => {
 
   const handleProceedToPayment = () => {
     setShowPlanNotification(false);
-    // For free trial, after closing notification, redirect to signup
-    if (selectedPlan && selectedPlan.freeTrial) {
+    if (selectedPlan?.freeTrial) {
       setShowSignUpNotification(true);
     }
   };
@@ -417,42 +242,30 @@ const Plans = () => {
     setSelectedPlan(null);
   };
 
-  // Handle free trial booking directly
   const handleFreeTrialBooking = async () => {
+    const user = getCurrentUser();
+    if (!user) {
+      setShowSignUpNotification(true);
+      return;
+    }
+
+    if (!isEligibleForFreeTrial) {
+      showNotification("You've already claimed your free trial. Upgrade to a paid plan for continued access.", 'info');
+      return;
+    }
+
     try {
-      const user = getCurrentUser();
-      if (!user) {
-        // If no user, redirect to signup
-        setShowSignUpNotification(true);
-        return;
-      }
-
-      // Check eligibility first
-      if (!isEligibleForFreeTrial) {
-        showNotification("You've already claimed your free trial. Upgrade to a paid plan for continued access.", 'info');
-        return;
-      }
-
-      // Get the selected event from localStorage if it exists
       const selectedEventStr = localStorage.getItem('selectedEvent');
-      let eventInfo = null;
-      if (selectedEventStr) {
-        try {
-          eventInfo = JSON.parse(selectedEventStr);
-        } catch (e) {
-          console.error('Error parsing selected event:', e);
-        }
-      }
+      const eventInfo = selectedEventStr ? JSON.parse(selectedEventStr) : null;
 
-      // Prepare booking data for free trial
       const bookingData = {
-        eventName: eventInfo ? eventInfo.name || eventInfo.title : "Free Trial",
+        eventName: eventInfo?.name || eventInfo?.title || "Free Trial",
         eventId: eventInfo ? String(eventInfo.id) : "free_trial",
         eventDate: eventInfo ? new Date(eventInfo.date) : new Date(),
-        eventTime: eventInfo ? eventInfo.time : '',
-        eventLocation: eventInfo ? eventInfo.location : '',
+        eventTime: eventInfo?.time || '',
+        eventLocation: eventInfo?.location || '',
         status: 'confirmed',
-        amount: 0, // Free trial
+        amount: 0,
         paymentId: 'free_trial_' + Date.now(),
         mode: 'free_trial',
         userId: user.uid,
@@ -462,50 +275,20 @@ const Plans = () => {
         bookingDate: new Date()
       };
 
-      // Create the booking in Firestore
-      const result = await firebaseService.createBooking(user.uid, bookingData);
-      console.log('Free trial booking created successfully with ID:', result.bookingId);
+      const { bookingId } = await firebaseService.createBooking(user.uid, bookingData);
+      const bookingDataWithId = { ...bookingData, id: bookingId };
 
-      // Add the booking ID to the booking data for storage
-      const bookingDataWithId = {
-        ...bookingData,
-        id: result.bookingId
-      };
-
-      // Clear the selected event from localStorage
       localStorage.removeItem('selectedEvent');
-
-      // Set flags in localStorage to indicate that bookings should be refreshed
       localStorage.setItem('refreshBookings', 'true');
       localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
-      localStorage.setItem('eventsUpdated', 'true');
-
-      // Store booking data for ticket display
       localStorage.setItem('latestBooking', JSON.stringify(bookingDataWithId));
-
-      // Store in a global key that both pages will check
-      localStorage.setItem('latestEventBooking', JSON.stringify({
-        eventId: bookingData.eventId,
-        bookingId: result.bookingId,
-        timestamp: Date.now()
-      }));
-
-      // Update eventBookings in localStorage to include the new booking
+      
       const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-      const updatedBookings = [...localBookings, bookingDataWithId];
-      localStorage.setItem('eventBookings', JSON.stringify(updatedBookings));
+      localStorage.setItem('eventBookings', JSON.stringify([...localBookings, bookingDataWithId]));
 
-      // Set the purchased plan
       setPurchasedPlan("Free Trial");
-
-      // Close the plan notification
-      setShowPlanNotification(false);
-      setSelectedPlan(null);
-
-      // Show success notification
       showNotification('Free trial booked successfully! Enjoy your session.', 'success');
 
-      // Redirect to dashboard where user can see their ticket
       setTimeout(() => {
         window.location.href = '/dashboard';
       }, 1500);
@@ -516,132 +299,71 @@ const Plans = () => {
   };
 
   const handlePayNow = (plan) => {
-    // Check if we're on the landing page or user page/dashboard
-    // More reliable detection using the specific class
-    const isOnDashboard = document.querySelector('.plans-page') !== null;
+    const isOnDashboard = !!document.querySelector('.plans-page');
     
     if (!isOnDashboard) {
-      // On landing page, show signup notification for all plans
       setShowSignUpNotification(true);
     } else {
-      // In dashboard, handle differently based on plan type
       if (plan.freeTrial) {
-        // For free trial in dashboard, check eligibility first
-        if (!isEligibleForFreeTrial) {
-          // Show notification that user has already claimed their free trial
-          showNotification("You've already claimed your free trial. Upgrade to a paid plan for continued access.", 'info');
-          return;
-        }
-        // For eligible users, directly create the free trial booking
-        setSelectedPlan(plan);
         handleFreeTrialBooking();
       } else {
-        // For paid plans in dashboard, go directly to payment WITHOUT showing any notification
         setSelectedPlan(plan);
         setShowPaymentModal(true);
       }
     }
   };
 
-  // Handle successful payment
   const handlePaymentSuccess = async (response) => {
-    console.log('Payment successful:', response);
-    // Close the modal
     setShowPaymentModal(false);
-    
-    // Create booking for the user
-    try {
-      const user = getCurrentUser();
-      if (user && selectedPlan) {
-        // Get the selected event from localStorage if it exists
-        const selectedEventStr = localStorage.getItem('selectedEvent');
-        let eventInfo = null;
-        if (selectedEventStr) {
-          try {
-            eventInfo = JSON.parse(selectedEventStr);
-          } catch (e) {
-            console.error('Error parsing selected event:', e);
-          }
-        }
-        
-        // Prepare booking data - USE ACTUAL EVENT ID IF AVAILABLE
-        const bookingData = {
-          eventName: eventInfo ? eventInfo.name || eventInfo.title : selectedPlan.name,
-          eventId: eventInfo ? String(eventInfo.id) : `plan_${selectedPlan.name.toLowerCase().replace(/\s+/g, '_')}`,
-          eventDate: eventInfo ? new Date(eventInfo.date) : new Date(),
-          eventTime: eventInfo ? eventInfo.time : '',
-          eventLocation: eventInfo ? eventInfo.location : '',
-          status: 'confirmed',
-          amount: selectedPlan.price,
-          paymentId: response.razorpay_payment_id || response.razorpay_order_id,
-          mode: 'razorpay',
-          userId: user.uid,
-          userEmail: user.email,
-          userName: user.name,
-          phoneNumber: user.phoneNumber,
-          bookingDate: new Date()
-        };
-        
-        // Create the booking in Firestore
-        const result = await firebaseService.createBooking(user.uid, bookingData);
-        console.log('Booking created successfully with ID:', result.bookingId);
-        
-        // Add the booking ID to the booking data for storage
-        const bookingDataWithId = {
-          ...bookingData,
-          id: result.bookingId
-        };
-        
-        // Clear the selected event from localStorage
-        localStorage.removeItem('selectedEvent');
-        
-        // Set flags in localStorage to indicate that bookings should be refreshed
-        localStorage.setItem('refreshBookings', 'true');
-        localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
-        localStorage.setItem('eventsUpdated', 'true');
-        
-        // Store booking data for ticket display
-        localStorage.setItem('latestBooking', JSON.stringify(bookingDataWithId));
-        
-        // Store in a global key that both pages will check
-        localStorage.setItem('latestEventBooking', JSON.stringify({
-          eventId: bookingData.eventId,
-          bookingId: result.bookingId,
-          timestamp: Date.now()
-        }));
-        
-        // Update eventBookings in localStorage to include the new booking
-        const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-        const updatedBookings = [...localBookings, bookingDataWithId];
-        localStorage.setItem('eventBookings', JSON.stringify(updatedBookings));
-        
-        // Force immediate refresh by directly updating localStorage values
-        localStorage.setItem('forceRefresh', 'true');
-      }
-    } catch (error) {
-      console.error('Error creating booking:', error);
-      // Even if booking creation fails, we still want to show success message
-    }
-    
-    // Set the purchased plan
-    setPurchasedPlan(selectedPlan?.name || 'Unknown Plan');
-    
-    // Close the payment modal and show success notification
-    closeModal();
-    showNotification('Payment successful! Thank you for your purchase.', 'success');
-    
-    // Redirect to dashboard where user can see their ticket
-    setTimeout(() => {
-      // Use window.location instead of navigate to ensure full page refresh
-      window.location.href = '/dashboard';
-    }, 1500);
+    const user = getCurrentUser();
+    if (!user || !selectedPlan) return;
 
+    try {
+      const selectedEventStr = localStorage.getItem('selectedEvent');
+      const eventInfo = selectedEventStr ? JSON.parse(selectedEventStr) : null;
+
+      const bookingData = {
+        eventName: eventInfo?.name || eventInfo?.title || selectedPlan.name,
+        eventId: eventInfo ? String(eventInfo.id) : `plan_${selectedPlan.name.toLowerCase().replace(/\s+/g, '_')}`,
+        eventDate: eventInfo ? new Date(eventInfo.date) : new Date(),
+        eventTime: eventInfo?.time || '',
+        eventLocation: eventInfo?.location || '',
+        status: 'confirmed',
+        amount: selectedPlan.price,
+        paymentId: response.razorpay_payment_id || response.razorpay_order_id,
+        mode: 'razorpay',
+        userId: user.uid,
+        userEmail: user.email,
+        userName: user.name,
+        phoneNumber: user.phoneNumber,
+        bookingDate: new Date()
+      };
+
+      const { bookingId } = await firebaseService.createBooking(user.uid, bookingData);
+      const bookingDataWithId = { ...bookingData, id: bookingId };
+
+      localStorage.removeItem('selectedEvent');
+      localStorage.setItem('refreshBookings', 'true');
+      localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
+      localStorage.setItem('latestBooking', JSON.stringify(bookingDataWithId));
+      
+      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      localStorage.setItem('eventBookings', JSON.stringify([...localBookings, bookingDataWithId]));
+
+      setPurchasedPlan(selectedPlan.name);
+      showNotification('Payment successful! Thank you for your purchase.', 'success');
+
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1500);
+    } catch (error) {
+      console.error('Error creating booking after payment:', error);
+      showNotification('Payment was successful, but failed to create booking. Please contact support.', 'error');
+    }
   };
 
-  // Handle failed payment
   const handlePaymentFailure = (error) => {
-    console.log('Payment failed:', error);
-    // Show error notification using in-app notification
+    console.error('Payment failed:', error);
     showNotification('Payment failed. Please try again.', 'error');
   };
 
@@ -649,17 +371,8 @@ const Plans = () => {
     setShowPaymentModal(false);
     setSelectedPlan(null);
   };
-
-  // Filter plans to hide free trial for ineligible users on dashboard
-  const filteredPlansData = plansData.filter(plan => {
-    // Always show all plans on landing page
-    const isOnDashboard = document.querySelector('.plans-page') !== null;
-    if (!isOnDashboard) return true;
-    
-    // On dashboard, we show all plans but disable the free trial if user is not eligible
-    // This is to keep the card visible but unusable as per user preference
-    return true;
-  });
+  
+  const filteredPlansData = plansData;
 
   return (
     <Element name="plans" className="plans-container">
@@ -743,7 +456,7 @@ const Plans = () => {
                   )}
                   {plan.originalPrice && (
                     <span className="discount-tag">
-                      SAVE ₹{plan.originalPrice - plan.price}
+                      SAVE ₹{parseInt(plan.originalPrice) - parseInt(plan.price)}
                     </span>
                   )}
                 </div>
@@ -770,17 +483,14 @@ const Plans = () => {
               
               <div className="plan-footer">
                 <button
-                  className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${plan.freeTrial && !isEligibleForFreeTrial ? 'disabled' : ''} ${!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan) ? 'disabled' : ''}`}
+                  className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan) ? 'disabled' : ''}`}
                   onClick={() => handlePayNow(plan)}
                   disabled={(plan.freeTrial && !isEligibleForFreeTrial) || (!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan))}
                 >
                   <span className="button-text">
                     {plan.freeTrial ? (isEligibleForFreeTrial ? "Start Free Trial" : "Already Claimed") : 
-                     (purchasedPlan ? 
-                       (purchasedPlan === 'Monthly Membership' ? "Booked for 24 hrs" : "Booked for 24 hrs") : 
-                       (hasBookedRecently(plan.name) ? 
-                         (plan.name === 'Monthly Membership' ? "Booked for 24 hrs" : "Booked for 24 hrs") : 
-                         "Choose Plan"))}
+                     (purchasedPlan === plan.name ? "Booked for 24 hrs" : 
+                       (hasBookedRecently(plan.name) ? "Booked for 24 hrs" : "Choose Plan"))}
                   </span>
                   <div className="button-arrow">→</div>
                 </button>
@@ -790,7 +500,6 @@ const Plans = () => {
         </div>
       </div>
 
-      {/* Enhanced Payment Modal */}
       {showPaymentModal && (
         <div className="payment-modal-overlay" onClick={closeModal}>
           <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
@@ -821,63 +530,52 @@ const Plans = () => {
                 {selectedPlan?.originalPrice && (
                   <div className="savings-info">
                     <span className="savings-text">
-                      You save ₹{selectedPlan?.originalPrice - selectedPlan?.price}!
+                      You save ₹{parseInt(selectedPlan?.originalPrice) - parseInt(selectedPlan?.price)}!
                     </span>
                   </div>
                 )}
               </div>
               
-              {/* Razorpay Payment Integration */}
               <div className="payment-methods-section">
                 <h5>PAYMENT METHOD</h5>
                 <div className="payment-grid">
-                  {/* Credit/Debit Card Payment Method */}
                   <div className="payment-method-card credit-card-method">
                     <div className="method-header">
-                      <div className="method-icon">
-                        <FaCreditCard />
-                      </div>
+                      <FaCreditCard />
                       <div className="method-details">
-                        <span className="method-name">Credit/Debit Card</span>
-                        <span className="method-description">Pay securely with your card</span>
+                        <span>Credit/Debit Card</span>
+                        <span>Pay securely with your card</span>
                       </div>
                     </div>
-                    <div className="method-footer">
-                      <PaymentButton
-                        amount={parseInt(selectedPlan?.price)}
-                        eventName={selectedPlan?.name}
-                        eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}`}
-                        onPaymentSuccess={handlePaymentSuccess}
-                        onPaymentFailure={handlePaymentFailure}
-                      />
-                    </div>
+                    <PaymentButton
+                      amount={parseInt(selectedPlan?.price)}
+                      eventName={selectedPlan?.name}
+                      eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}`}
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onPaymentFailure={handlePaymentFailure}
+                    />
                   </div>
                   
-                  {/* UPI Payment Method */}
                   <div className="payment-method-card upi-method">
                     <div className="method-header">
-                      <div className="method-icon">
-                        <FaQrcode />
-                      </div>
+                      <FaQrcode />
                       <div className="method-details">
-                        <span className="method-name">UPI Payment</span>
-                        <span className="method-description">Pay instantly using any UPI app</span>
+                        <span>UPI Payment</span>
+                        <span>Pay instantly using any UPI app</span>
                       </div>
                     </div>
-                    <div className="method-footer">
-                      <PaymentButton
-                        amount={parseInt(selectedPlan?.price)}
-                        eventName={selectedPlan?.name}
-                        eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}_upi`}
-                        onPaymentSuccess={handlePaymentSuccess}
-                        onPaymentFailure={handlePaymentFailure}
-                      />
-                    </div>
+                    <PaymentButton
+                      amount={parseInt(selectedPlan?.price)}
+                      eventName={selectedPlan?.name}
+                      eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}_upi`}
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onPaymentFailure={handlePaymentFailure}
+                    />
                   </div>
                 </div>
                 
                 <div className="security-note">
-                  <FaCheck className="security-icon" />
+                  <FaCheck />
                   <span>Secure payment processing powered by Razorpay</span>
                 </div>
               </div>
