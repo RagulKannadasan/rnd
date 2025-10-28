@@ -4,6 +4,26 @@ import { getApiUrl } from '../../services/apiConfig';
 import { FaCreditCard, FaLock, FaSpinner } from 'react-icons/fa';
 import './PaymentButton.css';
 
+// Helper function to generate user-friendly error messages
+const getFriendlyErrorMessage = (error) => {
+  // Check for network errors (fetch failures)
+  if (error.message.includes('Failed to fetch')) {
+    return 'Network error: Please check your internet connection and try again.';
+  }
+  
+  // Check for server-side errors based on status codes
+  if (error.message.includes('Server error 500')) {
+    return 'A server error occurred. Please try again later.';
+  }
+  if (error.message.includes('Server error 404')) {
+    return 'An error occurred while connecting to the payment service. Please try again.';
+  }
+  
+  // Default user-friendly message for other errors
+  return 'An unexpected error occurred. Please try again.';
+};
+
+
 const PaymentButton = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFailure }) => {
   const [loading, setLoading] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
@@ -59,7 +79,7 @@ const PaymentButton = ({ amount, eventName, eventId, onPaymentSuccess, onPayment
         setRazorpayLoaded(true);
       } catch (loadError) {
         if (onPaymentFailure) {
-          onPaymentFailure(loadError);
+          onPaymentFailure(new Error(getFriendlyErrorMessage(loadError)));
         }
         return;
       }
@@ -163,6 +183,7 @@ const PaymentButton = ({ amount, eventName, eventId, onPaymentSuccess, onPayment
           
           // Use onPaymentSuccess which will show notification in parent
           if (onPaymentSuccess) {
+            console.log('Payment success handler called:', response);
             onPaymentSuccess(response);
           }
         },
@@ -199,7 +220,7 @@ const PaymentButton = ({ amount, eventName, eventId, onPaymentSuccess, onPayment
       // Use onPaymentFailure to handle this error which will show notification in parent
       
       if (onPaymentFailure) {
-        onPaymentFailure(error);
+        onPaymentFailure(new Error(getFriendlyErrorMessage(error)));
       }
     } finally {
       setLoading(false);
