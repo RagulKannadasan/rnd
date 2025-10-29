@@ -4,7 +4,6 @@ const express = require('express');
 const cors = require('cors');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
-const createOrder = require('./create-order');
 
 // Initialize Firebase Admin SDK
 let admin;
@@ -40,41 +39,28 @@ app.use((req, res, next) => {
   next();
 });
 
-// A more robust CORS configuration for development environments
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:5003',
-  // Regex to dynamically match any port on your cloud workstation domain
-  /https?:\/\/\d+-firebase-rndgit-.*\.cloudworkstations\.dev/
-];
-
+// Middleware with CORS configuration for development
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.some(allowedOrigin => {
-        if (typeof allowedOrigin === 'string') {
-            return allowedOrigin === origin;
-        }
-        if (allowedOrigin instanceof RegExp) {
-            return allowedOrigin.test(origin);
-        }
-        return false;
-    })) {
-      // If the origin is in the allowed list, reflect it in the header
-      return callback(null, true);
-    } else {
-      // Otherwise, disallow the request
-      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-  },
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:3001', 
+    'http://localhost:5003',
+    // Local network IP for mobile testing
+    'http://192.168.1.21:3000',
+    // Ngrok URLs for mobile testing
+    'https://*.ngrok.io',
+    'https://*.ngrok-free.app',
+    // LocalTunnel URLs
+    'https://*.loca.lt',
+    // Serveo URLs
+    'https://*.serveo.net',
+    // Generic patterns for tunneling services
+    'https://*',
+    'http://*'
+  ],
   credentials: true,
   optionsSuccessStatus: 200
 }));
-
 app.use(express.json({ limit: '10mb' }));
 
 // Determine mode (test or live)
@@ -125,7 +111,93 @@ console.log(`Key ID set: ${!!razorpayKeyId}`);
 console.log(`Key Secret set: ${!!razorpayKeySecret}`);
 
 // Route to create Razorpay order
-app.post('/api/create-order', createOrder);
+app.post('/api/create-order', async (req, res) => {
+  try {
+    // Check if Razorpay is properly initialized
+    if (!razorpay) {
+      return res.status(500).json({
+        error: 'Payment service not available',
+        message: 'Razorpay service is not properly configured. Please contact the administrator.'
+      });
+    }
+
+    const { amount, currency, eventId, userId, eventName } = req.body;
+
+    // Log incoming request for debugging
+    console.log('Received order request:', { amount, currency, eventId, userId, eventName });
+
+    // Validate request
+    if (!amount || !currency || !eventId || !userId) {
+      console.log('Validation failed: Missing required fields');
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'Missing required fields: amount, currency, eventId, userId',
+      });
+    }
+
+    // Validate amount
+    if (amount <= 0) {
+      console.log('Validation failed: Invalid amount');
+      return res.status(400).json({
+        error: 'Invalid amount',
+        message: 'Amount must be greater than zero',
+      });
+    }
+
+    // Create order options
+    const options = {
+      amount: amount, // Amount in paise
+      currency: currency,
+      receipt: `receipt_order_${Date.now()}`,
+      notes: {
+        eventId: eventId,
+        userId: userId,
+        eventName: eventName || 'Event',
+        mode: razorpayMode, // Include mode in notes for reference
+      },
+    };
+
+    console.log('Creating Razorpay order with options:', options);
+
+    // Create order using Razorpay API
+    const order = await razorpay.orders.create(options);
+    
+    console.log('Order created successfully:', order);
+
+    // Return order details to frontend
+    res.json({
+      id: order.id,
+      currency: order.currency,
+      amount: order.amount,
+    });
+  } catch (error) {
+    console.error('Error creating Razorpay order:', error);
+    
+    // Handle different types of errors
+    if (error.statusCode === 401) {
+      // Authentication error - usually means invalid keys
+      return res.status(401).json({
+        error: 'Authentication failed',
+        message: 'Invalid Razorpay credentials. Please check the API keys.',
+        statusCode: 401
+      });
+    } else if (error.statusCode) {
+      // Other Razorpay API errors
+      console.error('Razorpay API error:', error.statusCode, error.error);
+      return res.status(error.statusCode).json({
+        error: 'Razorpay API error',
+        message: error.error.description || error.error.reason || error.error,
+        statusCode: error.statusCode
+      });
+    } else {
+      // Unexpected errors
+      return res.status(500).json({
+        error: 'Failed to create order',
+        message: error.message || 'An unexpected error occurred while creating the payment order',
+      });
+    }
+  }
+});
 
 // Route to create QR code payment order
 app.post('/api/create-qr-order', async (req, res) => {

@@ -282,7 +282,7 @@ const SignUp = () => {
           </button>
 
           <p className="SignIn-text">
-            Already have an account?{" "}
+            Already have an account??{" "}
             <button
               type="button"
               className="link-button"
@@ -302,4 +302,3 @@ const SignUp = () => {
 
 
 export default SignUp;
-
