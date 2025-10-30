@@ -30,11 +30,11 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "NODE_OPTIONS=--max-old-space-size=4096 react-scripts start",
     "prebuild": "npm install",
-    "build": "react-scripts build",
-    "build:netlify": "react-scripts build",
-    "build:analyze": "react-scripts build && npx serve -s build",
+    "build": "NODE_OPTIONS=--max-old-space-size=4096 react-scripts build",
+    "build:netlify": "NODE_OPTIONS=--max-old-space-size=4096 react-scripts build",
+    "build:analyze": "NODE_OPTIONS=--max-old-space-size=4096 react-scripts build && npx serve -s build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "node scripts/server.js",
