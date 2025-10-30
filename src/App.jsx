@@ -28,6 +28,14 @@ import NotificationsPage from './Components/Notifications/NotificationsPage';
 import TicketVerification from './Components/TicketVerification/TicketVerification';
 // Import the new PlansPage component
 import PlansPage from './Components/Plans/PlansPage';
+// Import the new FitnessTracker component
+import FitnessTracker from './Components/FitnessTracker/FitnessTracker';
+// Import the new Privacy component
+import Privacy from './Components/Privacy/Privacy';
+// Import the new Terms component
+import Terms from './Components/Terms/Terms';
+// Import the new FAQ component
+import FAQ from './Components/FAQ/FAQ';
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -159,6 +167,14 @@ function App() {
           <Route path="/ticket" element={<TicketVerification />} />
           {/* Add the new Plans route */}
           <Route path="/plans" element={<PlansPage />} />
+          {/* Add the new Fitness Tracker route */}
+          <Route path="/fitness" element={<FitnessTracker />} />
+          {/* Add the new Privacy route */}
+          <Route path="/privacy" element={<Privacy />} />
+          {/* Add the new Terms route */}
+          <Route path="/terms" element={<Terms />} />
+          {/* Add the new FAQ route */}
+          <Route path="/faq" element={<FAQ />} />
         </Routes>
       </Router>
     </ErrorBoundary>

@@ -51,8 +51,7 @@
     "update-stats": "node scripts/updateUserStats.js",
     "update-stats-all": "node scripts/updateUserStats.js --all",
     "update-stats-recent": "node scripts/updateUserStats.js --recent",
-    "reset-bookings": "node scripts/reset-bookings.js",
-    "dev": "concurrently \"npm start\" \"npm run server\""
+    "reset-bookings": "node scripts/reset-bookings.js"
   },
   "eslintConfig": {
     "extends": [
@@ -76,7 +75,6 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
     "cypress": "^15.2.0",
     "netlify": "^13.1.2",
     "netlify-cli": "^23.5.1"
