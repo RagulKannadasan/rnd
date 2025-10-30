@@ -31,6 +31,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "prebuild": "npm install",
     "build": "react-scripts build",
     "build:netlify": "react-scripts build",
     "build:analyze": "react-scripts build && npx serve -s build",
