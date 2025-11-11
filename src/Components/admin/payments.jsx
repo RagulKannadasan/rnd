@@ -90,6 +90,96 @@ const Payments = () => {
     }
   }, [filterDays]);
 
+  // Function to fetch user details by ID
+  const fetchUserDetailsById = useCallback(async (userId) => {
+    // Check cache first
+    if (userCache[userId]) {
+      return userCache[userId];
+    }
+    
+    try {
+      // Create a promise with timeout for the user query
+      const userQueryWithTimeout = new Promise(async (resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Timeout while fetching user details'));
+        }, 5000); // 5 second timeout
+        
+        try {
+          const userDocRef = doc(db, 'users', userId);
+          const userDoc = await getDoc(userDocRef);
+          clearTimeout(timeoutId);
+          resolve(userDoc);
+        } catch (error) {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      });
+      
+      const userDoc = await userQueryWithTimeout;
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        // Cache the result
+        setUserCache(prev => ({
+          ...prev,
+          [userId]: userData
+        }));
+        return userData;
+      } else {
+        console.log('User not found for ID:', userId);
+      }
+    } catch (error) {
+      console.error('Error fetching user details for ID:', userId, error);
+    }
+    return null;
+  }, [userCache]);
+
+  // Function to fetch actual payment method from Razorpay
+  const fetchPaymentMethodDetails = useCallback(async (paymentId) => {
+    // Check cache first
+    if (paymentMethodCache[paymentId]) {
+      return paymentMethodCache[paymentId];
+    }
+    
+    try {
+      // Create a promise with timeout for the API call
+      const fetchWithTimeout = new Promise(async (resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Timeout while fetching payment details'));
+        }, 5000); // 5 second timeout
+        
+        try {
+          const response = await fetch(getApiUrl(`/api/payment-details/${paymentId}`));
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            const data = await response.json();
+            resolve(data);
+          } else {
+            reject(new Error(`Failed to fetch payment details. Status: ${response.status}`));
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      });
+      
+      const data = await fetchWithTimeout;
+      
+      // Cache the result
+      setPaymentMethodCache(prev => ({
+        ...prev,
+        [paymentId]: data.paymentMethodDetails
+      }));
+      
+      return data.paymentMethodDetails;
+    } catch (error) {
+      console.error('Error fetching payment method details for ID:', paymentId, error);
+      // Return null to indicate failure but prevent app crash
+      return null;
+    }
+  }, [paymentMethodCache]);
+
   // Fetch user details for each payment
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -146,50 +236,6 @@ const Payments = () => {
     }
   }, [payments, paymentMethodCache, fetchPaymentMethodDetails]);
 
-  // Function to fetch user details by ID
-  const fetchUserDetailsById = useCallback(async (userId) => {
-    // Check cache first
-    if (userCache[userId]) {
-      return userCache[userId];
-    }
-    
-    try {
-      // Create a promise with timeout for the user query
-      const userQueryWithTimeout = new Promise(async (resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error('Timeout while fetching user details'));
-        }, 5000); // 5 second timeout
-        
-        try {
-          const userDocRef = doc(db, 'users', userId);
-          const userDoc = await getDoc(userDocRef);
-          clearTimeout(timeoutId);
-          resolve(userDoc);
-        } catch (error) {
-          clearTimeout(timeoutId);
-          reject(error);
-        }
-      });
-      
-      const userDoc = await userQueryWithTimeout;
-      
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        // Cache the result
-        setUserCache(prev => ({
-          ...prev,
-          [userId]: userData
-        }));
-        return userData;
-      } else {
-        console.log('User not found for ID:', userId);
-      }
-    } catch (error) {
-      console.error('Error fetching user details for ID:', userId, error);
-    }
-    return null;
-  }, [userCache]);
-
   // Format currency
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -231,52 +277,6 @@ const Payments = () => {
     return methodMap[method.toLowerCase()] || 
            method.charAt(0).toUpperCase() + method.slice(1).replace(/_/g, ' ');
   };
-
-  // Function to fetch actual payment method from Razorpay
-  const fetchPaymentMethodDetails = useCallback(async (paymentId) => {
-    // Check cache first
-    if (paymentMethodCache[paymentId]) {
-      return paymentMethodCache[paymentId];
-    }
-    
-    try {
-      // Create a promise with timeout for the API call
-      const fetchWithTimeout = new Promise(async (resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error('Timeout while fetching payment details'));
-        }, 5000); // 5 second timeout
-        
-        try {
-          const response = await fetch(getApiUrl(`/api/payment-details/${paymentId}`));
-          clearTimeout(timeoutId);
-          
-          if (response.ok) {
-            const data = await response.json();
-            resolve(data);
-          } else {
-            reject(new Error(`Failed to fetch payment details. Status: ${response.status}`));
-          }
-        } catch (error) {
-          clearTimeout(timeoutId);
-          reject(error);
-        }
-      });
-      
-      const data = await fetchWithTimeout;
-      
-      // Cache the result
-      setPaymentMethodCache(prev => ({
-        ...prev,
-        [paymentId]: data.paymentMethodDetails
-      }));
-      
-      return data.paymentMethodDetails;
-    } catch (error) {
-      console.error('Error fetching payment method details for ID:', paymentId, error);
-      // Return null to indicate failure but prevent app crash
-      return null;
-    }
-  }, [paymentMethodCache]);
 
   // Function to determine display name for payment method
   const getPaymentMethodDisplayName = (payment) => {
@@ -419,7 +419,8 @@ const Payments = () => {
     setTimeout(() => setNotification(null), 5000); // Auto-hide after 5 seconds
   };
 
-  // Function to update payment status
+  // Function to update payment status (currently unused, kept for future use)
+  // eslint-disable-next-line no-unused-vars
   const updatePaymentStatus = async (paymentId, newStatus) => {
     try {
       // Update in Firestore
