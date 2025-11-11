@@ -30,7 +30,7 @@ export const getApiBaseUrl = () => {
   
   // In production (Netlify), use the Render backend URL
   // Make sure to replace this with your actual Render backend URL
-  return process.env.REACT_APP_API_BASE_URL || 'https://your-render-app-name.onrender.com';
+  return process.env.REACT_APP_API_BASE_URL || 'https://rnd-hykn.onrender.com';
 };
 
 // Get the full API URL for a specific endpoint
