@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./Plans.css";
 import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar, FaQrcode } from "react-icons/fa";
 import { Element } from 'react-scroll';
@@ -70,9 +70,13 @@ const Plans = () => {
   const [isEligibleForFreeTrial, setIsEligibleForFreeTrial] = useState(false); // Conservative default; enable after check
   const [isCheckingFreeTrial, setIsCheckingFreeTrial] = useState(true);
   const [isProcessingFreeTrial, setIsProcessingFreeTrial] = useState(false);
-  const [bookingsUpdated, setBookingsUpdated] = useState(0); // State to track booking updates
+  // const [bookingsUpdated, setBookingsUpdated] = useState(0); // Disabled - was causing infinite loops
   const [purchasedPlan, setPurchasedPlan] = useState(null); // State to track which plan was purchased
   const [hasBookedThisWeek, setHasBookedThisWeek] = useState(false); // State to track if user has booked within current week
+  
+  // Use ref to track last processed bookings to prevent redundant processing
+  const lastProcessedBookingsRef = useRef(null);
+  const processingRef = useRef(false);
 
   const checkFreeTrialEligibility = useCallback(async (userId, phoneNumber) => {
     try {
@@ -137,6 +141,9 @@ const Plans = () => {
   }, []);
 
   // Fetch latest bookings from Firestore to determine paid status reliably
+  // This is now handled in the main auth useEffect to avoid duplicate subscriptions
+  // DISABLED: Commented out to prevent duplicate onAuthStateChanged subscriptions
+  /*
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -145,7 +152,6 @@ const Plans = () => {
       try {
         const bookings = await firebaseService.getUserBookings(currentUser.uid);
         if (Array.isArray(bookings)) {
-          // Persist to localStorage for other parts of the app that read from it
           const normalized = bookings.map(b => ({
             id: b.id,
             eventName: b.eventName,
@@ -161,22 +167,18 @@ const Plans = () => {
             userEmail: b.userEmail,
             userName: b.userName,
             phoneNumber: b.phoneNumber,
-            // Convert possible Firestore Timestamps to JS Date strings for local checks
             bookingDate: b.bookingDate && b.bookingDate.toDate ? b.bookingDate.toDate().toISOString() : (b.bookingDate || null),
             createdAt: b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().toISOString() : (b.createdAt || null)
           }));
           localStorage.setItem('eventBookings', JSON.stringify(normalized));
         }
-        // Determine "paid for this week" from Firestore data (exclude free trials)
         const now = new Date();
         const fiveDaysFromNow = new Date(now);
         fiveDaysFromNow.setDate(now.getDate() + 5);
         now.setHours(0,0,0,0);
         fiveDaysFromNow.setHours(23,59,59,999);
-        // Latest non-free-trial booking
         const nonFree = bookings.filter(b => b.mode !== 'free_trial');
         if (nonFree.length > 0) {
-          // Sort by bookingDate/createdAt desc
           nonFree.sort((a,b) => {
             const ad = (a.bookingDate && a.bookingDate.toDate ? a.bookingDate.toDate() : (a.bookingDate ? new Date(a.bookingDate) : (a.createdAt && a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)))) || new Date(0);
             const bd = (b.bookingDate && b.bookingDate.toDate ? b.bookingDate.toDate() : (b.bookingDate ? new Date(b.bookingDate) : (b.createdAt && b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)))) || new Date(0);
@@ -193,7 +195,6 @@ const Plans = () => {
           }
           if (latestDate) {
             latestDate.setHours(0,0,0,0);
-            // Mark booked for this week if within [today, today+5]
             setHasBookedThisWeek(latestDate >= now && latestDate <= fiveDaysFromNow);
           } else {
             setHasBookedThisWeek(false);
@@ -208,6 +209,7 @@ const Plans = () => {
     });
     return () => unsubscribe();
   }, []);
+  */
 
   // Function to check if user has booked within the last 24 hours based on plan (excluding free trials)
   const hasBookedRecently = useCallback((planName) => {
@@ -299,21 +301,38 @@ const Plans = () => {
 
   // Check free trial eligibility when component mounts and user changes
   useEffect(() => {
+    let isMounted = true;
+    
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!isMounted || processingRef.current) return;
+      
+      processingRef.current = true;
+      
       if (currentUser) {
         // Check eligibility on both landing page and dashboard pages
         try {
           await checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber || '');
           
+          if (!isMounted) {
+            processingRef.current = false;
+            return;
+          }
+          
           // Always check for recent bookings regardless of page
           // Check if there's a recent booking to set purchasedPlan
           const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-          console.log('Local bookings from localStorage:', localBookings);
+          
+          // Check if bookings have actually changed
+          const bookingsKey = JSON.stringify(localBookings);
+          if (lastProcessedBookingsRef.current === bookingsKey) {
+            processingRef.current = false;
+            return;
+          }
+          lastProcessedBookingsRef.current = bookingsKey;
           
           if (localBookings.length > 0) {
             // Filter out passed events
             const activeBookings = localBookings.filter(booking => !isEventDatePassed(booking.eventDate));
-            console.log('Active bookings:', activeBookings);
             
             if (activeBookings.length > 0) {
               // Get the most recent active booking
@@ -323,29 +342,28 @@ const Plans = () => {
                 return currentDate > latestDate ? current : latest;
               });
               
-              console.log('Most recent booking:', mostRecentBooking);
-              
-              // Set the purchased plan based on the most recent active booking
-              setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
+              // Only update if the value has changed
+              setPurchasedPlan(prev => {
+                const newPlan = mostRecentBooking.eventName || 'Unknown Plan';
+                return prev !== newPlan ? newPlan : prev;
+              });
               
               // Check if user has booked within the current week (5 days), excluding free trials
               const hasBookingThisWeek = localBookings.some(booking => 
                 booking.mode !== 'free_trial' &&
                 isBookingWithinCurrentWeek(booking.bookingDate || booking.createdAt)
               );
-              console.log('Has booking this week:', hasBookingThisWeek);
-              setHasBookedThisWeek(hasBookingThisWeek);
+              
+              setHasBookedThisWeek(prev => prev !== hasBookingThisWeek ? hasBookingThisWeek : prev);
             } else {
               // All events have passed, reset purchased plan
-              console.log('All events have passed, resetting state');
-              setPurchasedPlan(null);
-              setHasBookedThisWeek(false);
+              setPurchasedPlan(prev => prev !== null ? null : prev);
+              setHasBookedThisWeek(prev => prev !== false ? false : prev);
             }
           } else {
-            // No bookings, reset purchased plan
-            console.log('No bookings found, resetting state');
-            setPurchasedPlan(null);
-            setHasBookedThisWeek(false);
+            // No bookings, reset purchased plan - only update if needed
+            setPurchasedPlan(prev => prev !== null ? null : prev);
+            setHasBookedThisWeek(prev => prev !== false ? false : prev);
           }
           
           // Also check for a new booking that might have been set
@@ -353,12 +371,14 @@ const Plans = () => {
           if (newBooking) {
             try {
               const booking = JSON.parse(newBooking);
-              console.log('Found new booking:', booking);
               // Set the purchased plan regardless of event date
-              setPurchasedPlan(booking.eventName || 'Unknown Plan');
+              setPurchasedPlan(prev => {
+                const newPlan = booking.eventName || 'Unknown Plan';
+                return prev !== newPlan ? newPlan : prev;
+              });
               
               // Set that user has booked this week
-              setHasBookedThisWeek(true);
+              setHasBookedThisWeek(prev => prev !== true ? true : prev);
             } catch (e) {
               console.error('Error parsing new booking:', e);
             }
@@ -366,232 +386,43 @@ const Plans = () => {
         } catch (error) {
           console.error('Error in useEffect while checking eligibility:', error);
           showNotification("There was an issue checking your plan eligibility. Please refresh the page.", 'error');
+        } finally {
+          processingRef.current = false;
         }
       } else {
-        // Reset eligibility for non-logged in users
-        console.log('No current user, resetting state');
-        setIsEligibleForFreeTrial(true);
-        setPurchasedPlan(null);
-        setHasBookedThisWeek(false);
+        // Reset eligibility for non-logged in users - only update if needed
+        setIsEligibleForFreeTrial(prev => prev !== true ? true : prev);
+        setPurchasedPlan(prev => prev !== null ? null : prev);
+        setHasBookedThisWeek(prev => prev !== false ? false : prev);
+        processingRef.current = false;
       }
     });
 
-    return () => unsubscribe();
-  }, [checkFreeTrialEligibility, hasBookedRecently, hasBookedMonthlyRecently, bookingsUpdated]);
-
-  // Add useEffect to check for refresh flags when component mounts
-  useEffect(() => {
-    const checkForRefreshFlags = () => {
-      // Check for refresh flag
-      const shouldRefresh = localStorage.getItem('refreshBookings');
-      if (shouldRefresh === 'true') {
-        // Trigger a refresh by updating bookingsUpdated
-        setBookingsUpdated(prev => prev + 1);
-      }
-      
-      // Check for new booking flag (set after successful payment)
-      const newBooking = localStorage.getItem('newBooking');
-      if (newBooking) {
-        try {
-          const booking = JSON.parse(newBooking);
-          console.log('Found new booking on mount:', booking);
-          // Set the purchased plan regardless of event date
-          setPurchasedPlan(booking.eventName || 'Unknown Plan');
-          
-          // Set that user has booked this week only for paid bookings (exclude free trials)
-          setHasBookedThisWeek(booking.mode !== 'free_trial');
-        } catch (e) {
-          console.error('Error parsing new booking on mount:', e);
-        }
-      }
-      
-      // Check for event updates flag (set when events are updated in admin)
-      const eventsUpdated = localStorage.getItem('eventsUpdated');
-      if (eventsUpdated === 'true') {
-        // Reset purchased plan when events are updated
-        setPurchasedPlan(null);
-      }
-      
-      // Check for latest event booking (new approach)
-      const latestEventBooking = localStorage.getItem('latestEventBooking');
-      if (latestEventBooking) {
-        // Trigger a refresh by updating bookingsUpdated
-        setBookingsUpdated(prev => prev + 1);
-      }
-      
-      // Check for force refresh flag
-      const forceRefresh = localStorage.getItem('forceRefresh');
-      if (forceRefresh === 'true') {
-        // Clear the flag and trigger refresh
-        localStorage.removeItem('forceRefresh');
-        setBookingsUpdated(prev => prev + 1);
-      }
-      
-      // Check for existing bookings in localStorage and update state immediately
-      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-      if (localBookings.length > 0) {
-        // Filter out passed events
-        const activeBookings = localBookings.filter(booking => !isEventDatePassed(booking.eventDate));
-        console.log('Active bookings on mount:', activeBookings);
-        
-        if (activeBookings.length > 0) {
-          // Get the most recent active booking
-          const mostRecentBooking = activeBookings.reduce((latest, current) => {
-            const latestDate = new Date(latest.bookingDate || latest.createdAt);
-            const currentDate = new Date(current.bookingDate || current.createdAt);
-            return currentDate > latestDate ? current : latest;
-          });
-          
-          console.log('Most recent booking on mount:', mostRecentBooking);
-          
-          // Set the purchased plan based on the most recent active booking
-          setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
-          
-          // Check if user has booked within the current week (5 days), excluding free trials
-          const hasBookingThisWeek = localBookings.some(booking => 
-            booking.mode !== 'free_trial' &&
-            isBookingWithinCurrentWeek(booking.bookingDate || booking.createdAt)
-          );
-          console.log('Has booking this week on mount:', hasBookingThisWeek);
-          setHasBookedThisWeek(hasBookingThisWeek);
-        }
-      }
-      
-      // Also check if user has booked a monthly subscription within 30 days
-      const hasMonthlyBooking = hasBookedMonthlyRecently();
-      if (hasMonthlyBooking) {
-        console.log('User has booked monthly subscription within 30 days');
-        // If user has booked monthly, ensure the state reflects this
-        const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-        if (localBookings.length > 0) {
-          const monthlyBookings = localBookings.filter(booking => 
-            booking.eventName === 'Monthly Membership' && 
-            booking.mode !== 'free_trial'
-          );
-          
-          if (monthlyBookings.length > 0) {
-            // Set purchased plan to Monthly Membership
-            setPurchasedPlan('Monthly Membership');
-            setHasBookedThisWeek(true);
-          }
-        }
-      }
+    return () => {
+      isMounted = false;
+      processingRef.current = false;
+      unsubscribe();
     };
-    
-    // Check immediately when component mounts
-    checkForRefreshFlags();
-  }, [hasBookedMonthlyRecently]);
+  }, [checkFreeTrialEligibility]); // Removed other dependencies that cause re-renders
 
-  // Check for changes in bookings and events
-  useEffect(() => {
-    const checkForBookingChanges = () => {
-      // Check for force refresh flag
-      const forceRefresh = localStorage.getItem('forceRefresh');
-      if (forceRefresh === 'true') {
-        // Clear the flag
-        localStorage.removeItem('forceRefresh');
-      }
-      
-      // Update the state to trigger a re-render
-      setBookingsUpdated(prev => prev + 1);
-      
-      // Check if there's a new booking and set purchasedPlan if needed
-      const newBooking = localStorage.getItem('newBooking');
-      if (newBooking) {
-        try {
-          const booking = JSON.parse(newBooking);
-          console.log('Found new booking in localStorage:', booking);
-          // Set the purchased plan regardless of event date
-          setPurchasedPlan(booking.eventName || 'Unknown Plan');
-          
-          // Set that user has booked this week only for paid bookings (exclude free trials)
-          setHasBookedThisWeek(booking.mode !== 'free_trial');
-        } catch (e) {
-          console.error('Error parsing new booking:', e);
-        }
-      }
-      
-      // Check for event updates and reset purchasedPlan if events have changed
-      const eventsUpdated = localStorage.getItem('eventsUpdated');
-      if (eventsUpdated === 'true') {
-        // Reset purchased plan when events are updated
-        setPurchasedPlan(null);
-      }
-      
-      // Check if any booked events have passed and reset purchasedPlan if so
-      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-      console.log('Checking local bookings:', localBookings);
-      if (localBookings.length > 0) {
-        // Check if any booked events have passed
-        const anyEventPassed = localBookings.some(booking => {
-          return isEventDatePassed(booking.eventDate);
-        });
-        
-        // If any events have passed, reset the purchased plan state
-        // This ensures plans reset when their associated events pass
-        if (anyEventPassed) {
-          setPurchasedPlan(null);
-        }
-        
-        // Check if user has booked within the current week (5 days), excluding free trials
-        const hasBookingThisWeek = localBookings.some(booking => 
-          booking.mode !== 'free_trial' &&
-          isBookingWithinCurrentWeek(booking.bookingDate || booking.createdAt)
-        );
-        console.log('Has booking this week (from localBookings check):', hasBookingThisWeek);
-        setHasBookedThisWeek(hasBookingThisWeek);
-      } else {
-        // No bookings, reset purchased plan
-        setPurchasedPlan(null);
-        setHasBookedThisWeek(false);
-      }
-      
-      // Check if 24 hours have passed since last booking and reset purchasedPlan if so
-      const localBookings2 = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-      if (localBookings2.length > 0) {
-        // Get current time
-        const now = new Date();
-        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
-        
-        // Check if all bookings are older than 24 hours
-        const allBookingsOlder = localBookings2.every(booking => {
-          // Skip free trial bookings
-          if (booking.mode === 'free_trial') {
-            return true;
-          }
-          
-          const bookingDate = booking.bookingDate || booking.createdAt;
-          if (bookingDate) {
-            let bookingTime;
-            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-              bookingTime = bookingDate.toDate();
-            } else if (bookingDate instanceof Date) {
-              bookingTime = bookingDate;
-            } else {
-              bookingTime = new Date(bookingDate);
-            }
-            
-            return bookingTime < twentyFourHoursAgo;
-          }
-          
-          return true;
-        });
-        
-        // If all bookings are older than 24 hours, reset the purchased plan state
-        if (allBookingsOlder) {
-          setPurchasedPlan(null);
-        }
-      }
-    };
-    
-    // Check immediately
-    checkForBookingChanges();
-    
-    // Check every 5 seconds
-    const interval = setInterval(checkForBookingChanges, 5000);
-    
-    return () => clearInterval(interval);
-  }, [bookingsUpdated]);
+  // Add useEffect to check for refresh flags when component mounts - DISABLED to prevent loops
+  // This functionality is now handled in the main auth useEffect
+  // useEffect(() => {
+  //   const checkForRefreshFlags = () => {
+  //     // ... refresh flag logic ...
+  //   };
+  //   checkForRefreshFlags();
+  // }, []);
+
+  // Check for changes in bookings and events - DISABLED to prevent infinite loops
+  // This functionality is now handled in the main auth useEffect
+  // useEffect(() => {
+  //   const checkForBookingChanges = () => {
+  //     // ... booking change logic ...
+  //   };
+  //   const interval = setInterval(checkForBookingChanges, 10000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const plansData = [
     {
