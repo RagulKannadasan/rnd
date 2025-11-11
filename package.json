@@ -23,6 +23,7 @@
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
     "react-onclickoutside": "^6.12.2",
+    "react-pwa": "^0.0.1",
     "react-router-dom": "^6.25.1",
     "react-scripts": "^5.0.1",
     "react-scroll": "^1.8.7",
@@ -30,15 +31,13 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "NODE_OPTIONS=--max-old-space-size=4096 react-scripts start",
-    "prebuild": "npm install",
-    "build": "NODE_OPTIONS=--max-old-space-size=4096 react-scripts build",
-    "build:netlify": "NODE_OPTIONS=--max-old-space-size=4096 react-scripts build",
-    "build:analyze": "NODE_OPTIONS=--max-old-space-size=4096 react-scripts build && npx serve -s build",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "build:netlify": "react-scripts build",
+    "build:analyze": "react-scripts build && npx serve -s build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "node scripts/server.js",
-    "dev": "concurrently \"npm start\" \"npm run server\"",
     "test-server": "node scripts/test-server-access.js",
     "ngrok": "npx ngrok http 3000",
     "ngrok:server": "npx ngrok http 5001",
@@ -77,7 +76,6 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
     "cypress": "^15.2.0",
     "netlify": "^13.1.2",
     "netlify-cli": "^23.5.1"

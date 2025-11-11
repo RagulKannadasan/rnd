@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import fitnessService from '../../services/fitnessService';
 import Notifications from './Notifications';
 import AIAssistant from './AIAssistant';
@@ -18,7 +17,6 @@ const DashboardView = ({ user }) => {
   const [meals, setMeals] = useState([]);
   const [workouts, setWorkouts] = useState([]);
   const [profile, setProfile] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     let isMounted = true;
@@ -137,24 +135,14 @@ const DashboardView = ({ user }) => {
             }
           }
           
-          // Load today's water intake
-          const waterPromise = fitnessService.getWaterIntake(user.uid);
-          const waterResult = await Promise.race([waterPromise, timeout]);
-          
-          if (isMounted && waterResult.success) {
-            const today = new Date().toISOString().split('T')[0];
-            if (waterResult.data.date === today) {
-              setStats(prev => ({
-                ...prev,
-                waterIntake: waterResult.data.waterIntake
-              }));
-            } else {
-              // If it's a different day, start with 0
-              setStats(prev => ({
-                ...prev,
-                waterIntake: 0
-              }));
-            }
+          // Load water intake data
+          const waterData = await loadWaterIntakeData(user.uid);
+          if (isMounted && waterData) {
+            setStats(prev => ({
+              ...prev,
+              waterIntake: waterData.intake || 0,
+              waterGoal: waterData.goal || 8
+            }));
           }
         } catch (error) {
           console.error('Error loading dashboard data:', error);
@@ -170,36 +158,6 @@ const DashboardView = ({ user }) => {
     };
 
     loadDashboardData();
-    
-    // Set up daily refresh at 12:00 AM
-    const setupDailyRefresh = () => {
-      const now = new Date();
-      const nextMidnight = new Date();
-      nextMidnight.setHours(24, 0, 0, 0); // Set to next midnight (12:00 AM)
-      
-      const timeUntilMidnight = nextMidnight.getTime() - now.getTime();
-      
-      // Set timeout to refresh at midnight
-      const refreshTimeout = setTimeout(() => {
-        if (isMounted) {
-          loadDashboardData(); // Refresh data at midnight
-        }
-        
-        // Set up recurring daily refresh
-        const dailyInterval = setInterval(() => {
-          if (isMounted) {
-            loadDashboardData(); // Refresh data every 24 hours
-          }
-        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
-        
-        // Clean up interval on component unmount
-        return () => clearInterval(dailyInterval);
-      }, timeUntilMidnight);
-      
-      return () => clearTimeout(refreshTimeout);
-    };
-    
-    const cleanupDailyRefresh = setupDailyRefresh();
     
     // Listen for workout events to refresh dashboard
     const handleWorkoutEvent = () => {
@@ -222,13 +180,58 @@ const DashboardView = ({ user }) => {
     // Cleanup function to prevent state updates after component unmount
     return () => {
       isMounted = false;
-      cleanupDailyRefresh();
       window.removeEventListener('workoutLogged', handleWorkoutEvent);
       window.removeEventListener('workoutDeleted', handleWorkoutEvent);
       window.removeEventListener('mealLogged', handleMealEvent);
       window.removeEventListener('mealDeleted', handleMealEvent);
     };
   }, [user]);
+
+  // Load water intake data from localStorage or initialize
+  const loadWaterIntakeData = async (userId) => {
+    try {
+      const waterData = localStorage.getItem(`waterIntake_${userId}_${new Date().toISOString().split('T')[0]}`);
+      if (waterData) {
+        return JSON.parse(waterData);
+      }
+      return { intake: 0, goal: 8 };
+    } catch (error) {
+      console.error('Error loading water intake data:', error);
+      return { intake: 0, goal: 8 };
+    }
+  };
+
+  // Save water intake data to localStorage
+  const saveWaterIntakeData = async (userId, waterData) => {
+    try {
+      localStorage.setItem(`waterIntake_${userId}_${new Date().toISOString().split('T')[0]}`, JSON.stringify(waterData));
+      return true;
+    } catch (error) {
+      console.error('Error saving water intake data:', error);
+      return false;
+    }
+  };
+
+  // Add water intake
+  const addWaterIntake = async () => {
+    try {
+      const newIntake = stats.waterIntake + 1;
+      const updatedWaterData = {
+        intake: newIntake,
+        goal: stats.waterGoal
+      };
+      
+      const success = await saveWaterIntakeData(user.uid, updatedWaterData);
+      if (success) {
+        setStats(prev => ({
+          ...prev,
+          waterIntake: newIntake
+        }));
+      }
+    } catch (error) {
+      console.error('Error adding water intake:', error);
+    }
+  };
 
   // Calculate daily calorie needs based on user profile
   const calculateCalorieNeeds = (profile) => {
@@ -263,31 +266,6 @@ const DashboardView = ({ user }) => {
         return tdee + 500; // 500 calorie surplus for muscle gain
       default:
         return tdee; // maintenance
-    }
-  };
-
-  // Function to increase water intake
-  const increaseWaterIntake = async () => {
-    const newWaterIntake = stats.waterIntake + 1;
-    setStats(prev => ({
-      ...prev,
-      waterIntake: newWaterIntake
-    }));
-    
-    // Save to persistence
-    if (user && user.uid) {
-      try {
-        const waterData = {
-          waterIntake: newWaterIntake,
-          date: new Date().toISOString().split('T')[0],
-          userId: user.uid,
-          timestamp: new Date().toISOString()
-        };
-        
-        await fitnessService.saveWaterIntake(user.uid, waterData);
-      } catch (error) {
-        console.error('Error saving water intake:', error);
-      }
     }
   };
 
@@ -327,22 +305,22 @@ const DashboardView = ({ user }) => {
         <div className="stat-card">
           <h3>Calories Consumed</h3>
           <p className="stat-value">{stats.caloriesConsumed}<span>/{stats.caloriesGoal}</span></p>
-          <button className="add-button" onClick={() => navigate('/fitness?tab=meals')}>
-            Add +
+          <button className="add-meal-btn" onClick={() => window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'meals' }))}>
+            + Add Meal
           </button>
         </div>
         <div className="stat-card">
           <h3>Workouts This Week</h3>
           <p className="stat-value">{stats.workoutsThisWeek}<span>/{stats.workoutsGoal}</span></p>
-          <button className="add-button" onClick={() => navigate('/fitness?tab=workouts')}>
-            Add +
+          <button className="add-workout-btn" onClick={() => window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'workouts' }))}>
+            + Add Workout
           </button>
         </div>
         <div className="stat-card">
           <h3>Water Intake</h3>
           <p className="stat-value">{stats.waterIntake}<span>/{stats.waterGoal} glasses</span></p>
-          <button className="add-water-button" onClick={increaseWaterIntake}>
-            Add +
+          <button className="add-water-btn" onClick={addWaterIntake}>
+            + Add Water
           </button>
         </div>
       </div>

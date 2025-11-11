@@ -4,7 +4,6 @@ const express = require('express');
 const cors = require('cors');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
-const path = require('path');
 
 // Initialize Firebase Admin SDK
 let admin;
@@ -43,21 +42,19 @@ app.use((req, res, next) => {
 // Middleware with CORS configuration for development
 app.use(cors({
   origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001', 
+    'http://localhost:3000',
+    'http://localhost:3001',
     'http://localhost:5003',
-    // Local network IP for mobile testing
     'http://192.168.1.21:3000',
-    // Ngrok URLs for mobile testing
     'https://*.ngrok.io',
     'https://*.ngrok-free.app',
-    // LocalTunnel URLs
     'https://*.loca.lt',
-    // Serveo URLs
     'https://*.serveo.net',
-    // Generic patterns for tunneling services
     'https://*',
-    'http://*'
+    'http://*',
+
+    // ✅ Add this line below for your Netlify site:
+    'https://runanddevelop.netlify.app'
   ],
   credentials: true,
   optionsSuccessStatus: 200
@@ -575,15 +572,6 @@ app.get('/api/payment-details/:paymentId', async (req, res) => {
   }
 });
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../build')));
-
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../build/index.html'));
-});
-
 // Update the 404 handler
 app.use((req, res) => {
   console.log('404 - Route not found:', req.path);
@@ -605,8 +593,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Determine the port
-const PORT = process.env.BACKEND_PORT || process.env.PORT || 5001;
+// Determine the port - Modified for Render compatibility
+const PORT = process.env.PORT || process.env.BACKEND_PORT || 5001;
 console.log('  Using port:', PORT);
 
 // Start server
@@ -614,12 +602,14 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Razorpay backend server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Mode: ${razorpayMode.toUpperCase()}`);
-  console.log(`CORS enabled for: http://localhost:3000, http://localhost:3001, http://localhost:5001`);
+  
+  // Update CORS origins for production
+  console.log(`CORS enabled for frontend domains`);
   
   // Remind user to set up keys if they're using placeholder values
   if (razorpayKeyId && razorpayKeyId.includes('your_test_key_id')) {
     console.log('\n⚠️  WARNING: You are using placeholder Razorpay keys!');
-    console.log('Please update your .env file with real Razorpay test keys from https://dashboard.razorpay.com/');
+    console.log('Please update your environment variables with real Razorpay test keys from https://dashboard.razorpay.com/');
   }
 });
 

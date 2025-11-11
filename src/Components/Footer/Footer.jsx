@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FaInstagram,
-  FaEnvelope,
+  FaYoutube,
   FaMapMarkerAlt,
   FaPhone,
   FaChevronDown,
-
+  FaEnvelope,
 } from 'react-icons/fa';
 import './Footer.css';
 
@@ -96,13 +96,15 @@ const Footer = () => {
               <a href="mailto:info@runanddevelop.com" className="social-link" aria-label="Email" target="_blank" rel="noopener noreferrer">
                 <FaEnvelope />
               </a>
+              <a href="https://www.youtube.com/@RunAnddevelop" className="social-link" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
+                <FaYoutube />
+              </a>
             </div>
           </div>
 
           {/* Support */}
           <CollapsibleSection title="Support" defaultOpen={isDesktop} forceOpen={isDesktop}>
             <ul className="footer-links">
-              <li><Link to="/help">Help Center</Link></li>
               <li><Link to="/faq">FAQ</Link></li>
               <li><Link to="/privacy">Privacy Policy</Link></li>
               <li><Link to="/terms">Terms of Service</Link></li>
@@ -120,10 +122,7 @@ const Footer = () => {
                 <FaPhone className="contact-icon" />
                 <span>+91 82708 12842</span>
               </div>
-              <div className="contact-item">
-                <FaEnvelope className="contact-icon" />
-                <span>info@runanddevelop.com</span>
-              </div>
+
             </div>
           </CollapsibleSection>
         </div>
@@ -138,7 +137,7 @@ const Footer = () => {
             <div className="footer-bottom-links">
               <Link to="/privacy">Privacy</Link>
               <Link to="/terms">Terms</Link>
-              <Link to="/cookies">Cookies</Link>
+              <Link to="/faq">FAQ</Link>
             </div>
           </div>
         </div>

@@ -21,8 +21,7 @@ class FitnessService {
     MEAL_LOGS: 'mealLogs',
     WORKOUT_LOGS: 'workoutLogs',
     USER_GOALS: 'userGoals',
-    NUTRITION_DATA: 'nutritionData',
-    WATER_INTAKE: 'waterIntake'
+    NUTRITION_DATA: 'nutritionData'
   };
 
   // User Profile Management
@@ -248,43 +247,6 @@ class FitnessService {
     } catch (error) {
       console.error('Error getting user goals:', error);
       throw new Error('Failed to get goals: ' + error.message);
-    }
-  }
-
-  // Water Intake Management
-  async saveWaterIntake(userId, waterData) {
-    try {
-      // For now, we'll use localStorage for water intake data
-      // In the future, this can be extended to use Firebase
-      const waterIntakeKey = `waterIntake_${userId}_${new Date().toISOString().split('T')[0]}`;
-      localStorage.setItem(waterIntakeKey, JSON.stringify(waterData));
-      
-      return { success: true, message: 'Water intake saved successfully' };
-    } catch (error) {
-      console.error('Error saving water intake:', error);
-      throw new Error('Failed to save water intake: ' + error.message);
-    }
-  }
-
-  async getWaterIntake(userId) {
-    try {
-      // For now, we'll use localStorage for water intake data
-      // In the future, this can be extended to use Firebase
-      const today = new Date().toISOString().split('T')[0];
-      const waterIntakeKey = `waterIntake_${userId}_${today}`;
-      const waterData = localStorage.getItem(waterIntakeKey);
-      
-      if (waterData) {
-        return { success: true, data: JSON.parse(waterData) };
-      } else {
-        // Return default values if no data found
-        return { success: true, data: { waterIntake: 0, date: today } };
-      }
-    } catch (error) {
-      console.error('Error getting water intake:', error);
-      // Return default values if there's an error
-      const today = new Date().toISOString().split('T')[0];
-      return { success: true, data: { waterIntake: 0, date: today } };
     }
   }
 

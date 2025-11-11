@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import './FitnessTracker.css';
 import DashboardNav from '../DashboardNav/DashboardNav';
 import { auth } from '../../firebase';
@@ -8,26 +7,15 @@ import Profile from './Profile';
 import MealTracker from './MealTracker';
 import WorkoutTracker from './WorkoutTracker';
 import DashboardView from './DashboardView';
-import AIAssistant from './AIAssistant';
 import fitnessService from '../../services/fitnessService';
 
 const FitnessTracker = () => {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [ userProfile, setUserProfile ] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [profileSetupComplete, setProfileSetupComplete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0); // Used to force refresh of dashboard
-  const location = useLocation();
-
-  useEffect(() => {
-    // Check for tab parameter in URL
-    const urlParams = new URLSearchParams(location.search);
-    const tabParam = urlParams.get('tab');
-    if (tabParam && ['dashboard', 'meals', 'workouts', 'ai-assistant', 'profile'].includes(tabParam)) {
-      setActiveTab(tabParam);
-    }
-  }, [location]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -54,10 +42,16 @@ const FitnessTracker = () => {
       setRefreshKey(prev => prev + 1);
     };
 
+    // Listen for navigation events from dashboard
+    const handleNavigation = (event) => {
+      setActiveTab(event.detail);
+    };
+
     window.addEventListener('workoutLogged', handleWorkoutEvent);
     window.addEventListener('workoutDeleted', handleWorkoutEvent);
     window.addEventListener('mealLogged', handleMealEvent);
     window.addEventListener('mealDeleted', handleMealEvent);
+    window.addEventListener('navigateToTab', handleNavigation);
 
     return () => {
       unsubscribe();
@@ -65,6 +59,7 @@ const FitnessTracker = () => {
       window.removeEventListener('workoutDeleted', handleWorkoutEvent);
       window.removeEventListener('mealLogged', handleMealEvent);
       window.removeEventListener('mealDeleted', handleMealEvent);
+      window.removeEventListener('navigateToTab', handleNavigation);
     };
   }, []);
 
@@ -154,12 +149,6 @@ const FitnessTracker = () => {
             Workouts
           </button>
           <button 
-            className={`tab-button ${activeTab === 'ai-assistant' ? 'active' : ''}`}
-            onClick={() => setActiveTab('ai-assistant')}
-          >
-            AI Assistant
-          </button>
-          <button 
             className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => setActiveTab('profile')}
           >
@@ -171,7 +160,6 @@ const FitnessTracker = () => {
           {activeTab === 'dashboard' && <DashboardView key={refreshKey} user={user} />}
           {activeTab === 'meals' && <MealTracker user={user} />}
           {activeTab === 'workouts' && <WorkoutTracker user={user} onSwitchToDashboard={switchToDashboard} />}
-          {activeTab === 'ai-assistant' && <AIAssistant user={user} meals={[]} workouts={[]} profile={userProfile} />}
           {activeTab === 'profile' && <Profile user={user} onProfileUpdate={handleProfileUpdate} />}
         </div>
       </div>

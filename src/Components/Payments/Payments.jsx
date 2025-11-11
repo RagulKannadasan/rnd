@@ -282,7 +282,6 @@ const Payments = () => {
         normalizedPhone = '+91' + normalizedPhone;
       }
       
-      const razorpayMethod = 'razorpay'; // Define locally
       const bookingData = {
         userId: user.uid,
         eventId: eventId,
@@ -297,7 +296,7 @@ const Payments = () => {
         status: 'confirmed',
         isFreeTrial: false, // This is a paid booking
         amount: 100,
-        paymentMethod: razorpayMethod,
+        paymentMethod: 'razorpay',
         razorpayPaymentId: response.razorpay_payment_id,
         razorpayOrderId: response.razorpay_order_id
       };

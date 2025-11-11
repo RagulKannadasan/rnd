@@ -78,7 +78,6 @@
   border: 1px solid #F15A24; /* Orange border */
   box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
   color: #ffffff; /* White text */
-  position: relative;
 }
 
 .stat-card h3 {
@@ -98,23 +97,6 @@
   font-size: 16px;
   color: #cccccc; /* Light gray */
   font-weight: normal;
-}
-
-.add-button, .add-water-button {
-  background-color: #F15A24;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-  margin-top: 10px;
-}
-
-.add-button:hover, .add-water-button:hover {
-  background-color: #d64a1f;
 }
 
 .dashboard-charts {
@@ -261,6 +243,96 @@
   box-shadow: 0 0 5px rgba(241, 90, 36, 0.5);
 }
 
+/* Added styles for program summary */
+.program-summary {
+  background: #222222;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.summary-item .label {
+  font-weight: bold;
+  color: #cccccc;
+}
+
+.summary-item .value {
+  color: #ffffff;
+}
+
+.summary-item .program-name {
+  color: #F15A24;
+}
+
+/* Added styles for nutrition calculations */
+.nutrition-calculations {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #333333;
+}
+
+.nutrition-calculations h3 {
+  color: #ffffff;
+  margin-top: 0;
+}
+
+.calculation-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.calculation-card {
+  background: #222222;
+  border-radius: 4px;
+  padding: 15px;
+  text-align: center;
+}
+
+.calculation-card h4 {
+  margin: 0 0 10px 0;
+  color: #cccccc;
+  font-size: 16px;
+}
+
+.calculation-card .value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #F15A24;
+  margin: 0 0 5px 0;
+}
+
+.calculation-card .description {
+  font-size: 12px;
+  color: #aaaaaa;
+  margin: 0;
+}
+
+/* Added styles for quantity input group */
+.quantity-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.quantity-input {
+  flex: 2;
+}
+
+.unit-select {
+  flex: 1;
+}
+
 .loading-text {
   font-size: 14px;
   color: #F15A24;
@@ -272,63 +344,74 @@
 .log-meal-button,
 .log-workout-button,
 .save-profile-button,
+.get-nutrition-button,
 .next-button,
 .back-button,
-.save-button,
-.edit-profile-button {
-  background: transparent;
-  color: #F15A24;
-  border: 1px solid #F15A24;
-  padding: 8px 15px;
+.save-button {
+  background-color: #F15A24;
+  color: white;
+  border: none;
+  padding: 12px 20px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: normal;
-  transition: all 0.3s ease;
-  opacity: 0.8;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
 }
 
 .log-meal-button:hover,
 .log-workout-button:hover,
 .save-profile-button:hover,
+.get-nutrition-button:hover,
 .next-button:hover,
 .back-button:hover,
-.save-button:hover,
-.edit-profile-button:hover {
-  background-color: rgba(241, 90, 36, 0.1);
-  opacity: 1;
+.save-button:hover {
+  background-color: #d64a1f;
 }
 
 .log-meal-button:disabled,
 .log-workout-button:disabled,
 .save-profile-button:disabled,
+.get-nutrition-button:disabled,
 .next-button:disabled,
-.back-button:disabled,
 .save-button:disabled {
-  background: transparent;
-  color: #666666;
-  border-color: #666666;
+  background-color: #666666;
   cursor: not-allowed;
-  opacity: 0.5;
+}
+
+.back-button {
+  background-color: #333333;
+  margin-right: 10px;
+}
+
+.back-button:hover {
+  background-color: #444444;
 }
 
 .delete-meal-button,
 .delete-workout-button {
-  background: transparent;
-  color: #dc3545;
-  border: 1px solid #dc3545;
-  padding: 6px 10px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
-  transition: all 0.3s ease;
-  opacity: 0.8;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
 }
 
 .delete-meal-button:hover,
 .delete-workout-button:hover {
-  background-color: rgba(220, 53, 69, 0.1);
-  opacity: 1;
+  background-color: #c82333;
+}
+
+/* Form navigation */
+.form-navigation {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #333333;
 }
 
 /* Messages */
@@ -487,8 +570,6 @@
   box-shadow: 0 0 10px rgba(241, 90, 36, 0.3);
   color: #ffffff;
   margin: 30px 0;
-  position: relative;
-  animation: pulse-border 2s infinite;
 }
 
 .notifications-panel h3 {
@@ -509,8 +590,10 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 15px;
-  border-radius: 4px;
+  border-radius: 8px;
   background: #222222;
+  position: relative;
+  border-left: 4px solid #17a2b8;
 }
 
 .notification-item.notification-warning {
@@ -523,17 +606,20 @@
 
 .notification-content {
   flex: 1;
+  padding-right: 20px;
 }
 
 .notification-content h4 {
-  margin: 0 0 5px 0;
+  margin: 0 0 8px 0;
   color: #ffffff;
+  font-size: 16px;
 }
 
 .notification-content p {
   margin: 0;
   color: #cccccc;
   font-size: 14px;
+  line-height: 1.4;
 }
 
 .dismiss-button {
@@ -548,22 +634,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
 
 .dismiss-button:hover {
   color: #ffffff;
-}
-
-@keyframes pulse-border {
-  0% {
-    box-shadow: 0 0 10px rgba(241, 90, 36, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(241, 90, 36, 0.6);
-  }
-  100% {
-    box-shadow: 0 0 10px rgba(241, 90, 36, 0.3);
-  }
 }
 
 /* AI Assistant */
@@ -575,14 +652,6 @@
   box-shadow: 0 0 10px rgba(241, 90, 36, 0.3);
   color: #ffffff;
   margin: 30px 0;
-}
-
-.ai-assistant-page {
-  width: 100%;
-}
-
-.ai-assistant-container {
-  margin-top: 20px;
 }
 
 .ai-header {
@@ -784,32 +853,255 @@
   
   .notifications-panel {
     margin: 20px 0;
+    padding: 15px;
+  }
+  
+  .notification-item {
+    padding: 12px;
+    border-radius: 6px;
+  }
+  
+  .notification-content h4 {
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  
+  .notification-content p {
+    font-size: 13px;
+  }
+  
+  .dismiss-button {
+    width: 25px;
+    height: 25px;
+    font-size: 18px;
+    top: 8px;
+    right: 8px;
   }
 }
 
-/* Subtle Admin Button Styles */
-.subtle-admin-button {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: transparent;
+/* Mobile Responsive Font Sizing */
+@media screen and (max-width: 768px) {
+  .fitness-header h1 {
+    font-size: 24px;
+  }
+  
+  .fitness-header p {
+    font-size: 16px;
+  }
+  
+  .tab-button {
+    font-size: 14px;
+    padding: 12px 15px;
+  }
+  
+  .stat-card h3 {
+    font-size: 16px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .stat-value span {
+    font-size: 14px;
+  }
+  
+  .chart-container h3 {
+    font-size: 16px;
+  }
+  
+  .tip-card h4 {
+    font-size: 16px;
+  }
+  
+  .tip-card p {
+    font-size: 14px;
+  }
+  
+  .add-meal-btn,
+  .add-workout-btn,
+  .add-water-btn {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
+  .profile-form h2,
+  .meal-tracker h2,
+  .workout-tracker h2 {
+    font-size: 20px;
+  }
+  
+  .form-step h3 {
+    font-size: 18px;
+  }
+  
+  .meal-item h4,
+  .workout-item h4 {
+    font-size: 16px;
+  }
+  
+  .meal-item p,
+  .workout-item p {
+    font-size: 14px;
+  }
+  
+  .ai-assistant h3 {
+    font-size: 18px;
+  }
+  
+  .message {
+    font-size: 14px;
+  }
+  
+  .chat-input {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .fitness-header h1 {
+    font-size: 20px;
+  }
+  
+  .fitness-header p {
+    font-size: 14px;
+  }
+  
+  .tab-button {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  
+  .stat-card h3 {
+    font-size: 14px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .stat-value span {
+    font-size: 12px;
+  }
+  
+  .chart-container h3 {
+    font-size: 14px;
+  }
+  
+  .tip-card h4 {
+    font-size: 14px;
+  }
+  
+  .tip-card p {
+    font-size: 12px;
+  }
+  
+  .add-meal-btn,
+  .add-workout-btn,
+  .add-water-btn {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+  
+  .profile-form h2,
+  .meal-tracker h2,
+  .workout-tracker h2 {
+    font-size: 18px;
+  }
+  
+  .form-step h3 {
+    font-size: 16px;
+  }
+  
+  .meal-item h4,
+  .workout-item h4 {
+    font-size: 14px;
+  }
+  
+  .meal-item p,
+  .workout-item p {
+    font-size: 12px;
+  }
+  
+  .ai-assistant h3 {
+    font-size: 16px;
+  }
+  
+  .message {
+    font-size: 12px;
+  }
+  
+  .chat-input {
+    font-size: 12px;
+  }
+}
+
+/* Add Meal Button Styles */
+.add-meal-btn {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #F15A24; /* Orange color */
+  color: white;
   border: none;
-  color: #F15A24;
-  font-size: 12px;
-  padding: 5px 10px;
+  border-radius: 20px;
   cursor: pointer;
-  z-index: 1000;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.subtle-admin-button:hover {
-  opacity: 1;
+.add-meal-btn:hover {
+  background-color: #d14a1f; /* Darker orange on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.edit-profile-button-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
+.add-meal-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Add Workout Button Styles */
+.add-workout-btn {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #F15A24; /* Orange color */
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.add-workout-btn:hover {
+  background-color: #d14a1f; /* Darker orange on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Add Water Button Styles */
+.add-water-btn {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #F15A24; /* Orange color */
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.add-water-btn:hover {
+  background-color: #d14a1f; /* Darker orange on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.add-water-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }

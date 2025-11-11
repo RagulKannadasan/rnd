@@ -261,13 +261,18 @@ function UserEventsPage() {
         firebaseService.getUpcomingEvents(),
         firebaseService.getPastEvents()
       ]);
+      console.log('fetchEvents -> upcoming:', upcoming);
+      console.log('fetchEvents -> past:', past);
       
       // Filter to show only ONE "Weekly Community Run" event and ensure proper ID handling
+      const getEventName = (e) => (e.name || e.title || '').toString();
+
       const weeklyCommunityRun = upcoming.filter(event => 
-        event.name && event.name.toLowerCase().includes('weekly community run')
+        getEventName(event).toLowerCase().includes('weekly community run')
       ).map(event => ({
         ...event,
-        id: String(event.id) // Ensure ID is a string for consistent comparison
+        id: String(event.id), // Ensure ID is a string for consistent comparison
+        image: event.image || event.imageUrl || event.imageURL || event.imagePath || event.image_path
       }));
       
       // Use only the first event if there are multiple instances
@@ -275,14 +280,34 @@ function UserEventsPage() {
       
       // Filter past events to show only "Weekly Community Run" events
       const pastWeeklyCommunityRun = past.filter(event => 
-        event.name && event.name.toLowerCase().includes('weekly community run')
+        getEventName(event).toLowerCase().includes('weekly community run')
       ).map(event => ({
         ...event,
-        id: String(event.id) // Ensure ID is a string for consistent comparison
+        id: String(event.id), // Ensure ID is a string for consistent comparison
+        image: event.image || event.imageUrl || event.imageURL || event.imagePath || event.image_path
       }));
+
+      console.log('pastWeeklyCommunityRun (filtered):', pastWeeklyCommunityRun);
       
       setUpcomingEvents(filteredUpcomingEvents);
-      setPastEvents(pastWeeklyCommunityRun.length > 0 ? [pastWeeklyCommunityRun[0]] : []);
+
+      if (pastWeeklyCommunityRun.length > 0) {
+        setPastEvents([pastWeeklyCommunityRun[0]]);
+        console.log('Using filtered past weekly event:', pastWeeklyCommunityRun[0]);
+      } else if (past && past.length > 0) {
+        // Fallback: if no past weekly community run found, show all past events (mapped)
+        const mappedPast = past.map(event => ({
+          ...event,
+          id: String(event.id),
+          image: event.image || event.imageUrl || event.imageURL || event.imagePath || event.image_path,
+          title: event.title || event.name
+        }));
+        setPastEvents(mappedPast);
+        console.log('No filtered weekly past event found — falling back to all past events:', mappedPast);
+      } else {
+        setPastEvents([]);
+        console.log('No past events returned from service');
+      }
     } catch (err) {
       console.error('Error fetching events:', err);
       setError('Failed to load events. Please try again later.');
@@ -370,7 +395,7 @@ function UserEventsPage() {
     return false;
   };
 
-  // Function to check if user has booked within the last 24 hours based on plan (excluding free trials)
+  // Function to check if user has booked within the last 5 days based on plan (excluding free trials)
   const hasBookedRecently = useCallback((planName) => {
     // Get bookings from localStorage
     const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
@@ -381,9 +406,9 @@ function UserEventsPage() {
     
     // Get current time for comparison
     const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
+    const fiveDaysAgo = new Date(now.getTime() - (5 * 24 * 60 * 60 * 1000)); // 5 days ago
     
-    // Check if any booking was made within the last 24 hours for this plan (excluding free trials)
+    // Check if any booking was made within the last 5 days for this plan (excluding free trials)
     return localBookings.some(booking => {
       // Skip free trial bookings
       if (booking.mode === 'free_trial') {
@@ -395,7 +420,7 @@ function UserEventsPage() {
         return false;
       }
       
-      // Check if booking was made within the last 24 hours
+      // Check if booking was made within the last 5 days
       const bookingDate = booking.bookingDate || booking.createdAt;
       if (bookingDate) {
         let bookingTime;
@@ -407,12 +432,163 @@ function UserEventsPage() {
           bookingTime = new Date(bookingDate);
         }
         
-        return bookingTime >= twentyFourHoursAgo && bookingTime <= now;
+        return bookingTime >= fiveDaysAgo && bookingTime <= now;
       }
       
       return false;
     });
   }, []);
+
+  // Function to check if user has booked a monthly plan within the last 30 days (excluding free trials)
+  const hasBookedMonthlyRecently = useCallback(() => {
+    // Get bookings from localStorage
+    const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+    
+    if (!localBookings || localBookings.length === 0) {
+      return false;
+    }
+    
+    // Get current time for comparison
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days ago
+    
+    // Check if any booking was made within the last 30 days for Monthly Membership (excluding free trials)
+    return localBookings.some(booking => {
+      // Skip free trial bookings
+      if (booking.mode === 'free_trial') {
+        return false;
+      }
+      
+      // Check if booking is for Monthly Membership
+      if (booking.eventName !== 'Monthly Membership') {
+        return false;
+      }
+      
+      // Check if booking was made within the last 30 days
+      const bookingDate = booking.bookingDate || booking.createdAt;
+      if (bookingDate) {
+        let bookingTime;
+        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+          bookingTime = bookingDate.toDate();
+        } else if (bookingDate instanceof Date) {
+          bookingTime = bookingDate;
+        } else {
+          bookingTime = new Date(bookingDate);
+        }
+        
+        return bookingTime >= thirtyDaysAgo && bookingTime <= now;
+      }
+      
+      return false;
+    });
+  }, []);
+
+  // New function to check if user booked within the last 5 days (for regular plans)
+  const hasUserBookedWithinFiveDays = (eventId, eventDate) => {
+    if (!userBookings || userBookings.length === 0) {
+      return false;
+    }
+
+    const targetEventId = String(eventId);
+    const now = new Date();
+    const fiveDaysAgo = new Date(now.getTime() - (5 * 24 * 60 * 60 * 1000)); // 5 days ago
+    
+    // Check if any booking was made within the last 5 days
+    return userBookings.some(booking => {
+      // First check if the booking is for the target event
+      let isTargetEvent = false;
+      
+      // Check multiple possible field names
+      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
+      if (bookingEventId) {
+        isTargetEvent = String(bookingEventId) === targetEventId;
+      }
+      
+      // If this booking is not for the target event, skip it
+      if (!isTargetEvent) {
+        return false;
+      }
+      
+      // If eventDate is provided, also check if the booking is for the same date
+      if (eventDate) {
+        const bookingEventDate = booking.eventDate;
+        if (bookingEventDate) {
+          let bookingDate;
+          if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
+            bookingDate = bookingEventDate.toDate();
+          } else if (bookingEventDate instanceof Date) {
+            bookingDate = bookingEventDate;
+          } else {
+            bookingDate = new Date(bookingEventDate);
+          }
+          
+          // Compare dates
+          const eventDateObj = new Date(eventDate);
+          if (bookingDate.toDateString() !== eventDateObj.toDateString()) {
+            // Different date, so not the same event instance
+            return false;
+          }
+        }
+      }
+      
+      // Now check if the booking was made within the last 5 days
+      const bookingCreationDate = booking.bookingDate || booking.createdAt;
+      if (bookingCreationDate) {
+        let bookingTime;
+        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+          bookingTime = bookingCreationDate.toDate();
+        } else if (bookingCreationDate instanceof Date) {
+          bookingTime = bookingCreationDate;
+        } else {
+          bookingTime = new Date(bookingCreationDate);
+        }
+        
+        return bookingTime >= fiveDaysAgo && bookingTime <= now;
+      }
+      
+      return false;
+    });
+  };
+
+  // Function to check if user booked a monthly subscription within the last 30 days
+  const hasUserBookedMonthlyWithinThirtyDays = () => {
+    if (!userBookings || userBookings.length === 0) {
+      return false;
+    }
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days ago
+    
+    // Check if any booking was made within the last 30 days for Monthly Membership
+    return userBookings.some(booking => {
+      // Check if booking is for Monthly Membership
+      if (booking.eventName !== 'Monthly Membership') {
+        return false;
+      }
+      
+      // Skip free trial bookings
+      if (booking.mode === 'free_trial') {
+        return false;
+      }
+      
+      // Now check if the booking was made within the last 30 days
+      const bookingCreationDate = booking.bookingDate || booking.createdAt;
+      if (bookingCreationDate) {
+        let bookingTime;
+        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+          bookingTime = bookingCreationDate.toDate();
+        } else if (bookingCreationDate instanceof Date) {
+          bookingTime = bookingCreationDate;
+        } else {
+          bookingTime = new Date(bookingCreationDate);
+        }
+        
+        return bookingTime >= thirtyDaysAgo && bookingTime <= now;
+      }
+      
+      return false;
+    });
+  };
 
   // New function to check if user booked today (regardless of event)
   const hasUserBookedToday = (eventId, eventDate) => {
@@ -785,12 +961,12 @@ function UserEventsPage() {
                           onClick={() => handleRegister(event)}
                           disabled={checkTodaysBookingFromStorage(event.id) || 
                                    isBookingClosed(event) ||
-                                   hasBookedRecently('Pay-Per-Run') ||
-                                   hasBookedRecently('Monthly Membership')}
+                                   hasUserBookedToday(event.id, event.date)}
                         >
                           {isBookingClosed(event) ? 'Bookings Closed' :
-                           checkTodaysBookingFromStorage(event.id) ? 'Already Booked Today' : 
-                           (hasBookedRecently('Pay-Per-Run') || hasBookedRecently('Monthly Membership')) ? 'Already Booked' :
+                           checkTodaysBookingFromStorage(event.id) ? 'Already Booked' : 
+                           hasUserBookedToday(event.id, event.date) ? 
+                             (hasUserBookedMonthlyWithinThirtyDays() ? 'Booked for a month' : 'Already Booked') :
                            'Book Your Slot'}
                         </button>
                       </div>
@@ -838,20 +1014,6 @@ function UserEventsPage() {
                       </div>
                       
                       <p className="event-description">{event.description}</p>
-                      
-                      <div className="event-stats">
-                        <div className="participants-info">
-                          <div className="progress-container">
-                            <div 
-                              className="progress-fill" 
-                              style={{ width: `${getProgressPercentage(event.participants || 0, event.maxParticipants || 100)}%` }}
-                            ></div>
-                          </div>
-                          <div className="progress-text">
-                            {event.participants || 0} participants
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 ))

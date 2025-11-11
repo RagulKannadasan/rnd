@@ -12,6 +12,9 @@ import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 // Import our stats scheduler
 import statsScheduler from './services/statsScheduler';
 
+// Import InstallPrompt component
+import InstallPrompt from './Components/InstallPrompt/InstallPrompt';
+
 import Home from './Components/Home';
 import EventsPage from './Components/EventsPage';
 import SignIn from './Components/SignIn/SignIn';
@@ -30,11 +33,11 @@ import TicketVerification from './Components/TicketVerification/TicketVerificati
 import PlansPage from './Components/Plans/PlansPage';
 // Import the new FitnessTracker component
 import FitnessTracker from './Components/FitnessTracker/FitnessTracker';
-// Import the new Privacy component
-import Privacy from './Components/Privacy/Privacy';
-// Import the new Terms component
-import Terms from './Components/Terms/Terms';
-// Import the new FAQ component
+// Import Privacy Policy component
+import PrivacyPolicy from './Components/PrivacyPolicy/PrivacyPolicy';
+// Import Terms component
+import Terms from './Components/TermsOfService/Terms';
+// Import FAQ component
 import FAQ from './Components/FAQ/FAQ';
 
 // Error Boundary Component
@@ -150,6 +153,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <InstallPrompt />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/events" element={<EventsPage />} />
@@ -169,11 +173,11 @@ function App() {
           <Route path="/plans" element={<PlansPage />} />
           {/* Add the new Fitness Tracker route */}
           <Route path="/fitness" element={<FitnessTracker />} />
-          {/* Add the new Privacy route */}
-          <Route path="/privacy" element={<Privacy />} />
-          {/* Add the new Terms route */}
+          {/* Add Privacy Policy route */}
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          {/* Add Terms route */}
           <Route path="/terms" element={<Terms />} />
-          {/* Add the new FAQ route */}
+          {/* Add FAQ route */}
           <Route path="/faq" element={<FAQ />} />
         </Routes>
       </Router>

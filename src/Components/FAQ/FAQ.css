@@ -1,55 +1,48 @@
-.faq-page {
+.faq {
   padding: 2rem 1rem;
-  background-color: #000000; /* Black background */
+  background-color: #121212;
+  color: #e0e0e0; /* Reverted back to light gray */
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .faq-container {
   max-width: 800px;
-  width: 100%;
-  background: #000000; /* Black background */
+  margin: 0 auto;
   padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(241, 90, 36, 0.3); /* Orange shadow */
-  border: 1px solid #F15A24; /* Orange border */
-  text-align: center;
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.faq-container h1 {
-  color: #F15A24; /* Orange heading */
+.faq h1 {
+  color: #F15A24;
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
   font-size: 2.5rem;
-}
-
-.faq-container h2 {
-  color: #F15A24; /* Orange color for subheadings */
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
-  text-align: center;
-}
-
-.faq-container p {
-  line-height: 1.6;
-  color: #ffffff; /* White text for paragraphs */
-  margin-bottom: 1rem;
-  text-align: center;
+  font-weight: 700;
 }
 
 .faq-item {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.faq-item:last-child {
-  margin-bottom: 0;
+.faq h2 {
+  color: #F15A24;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.faq p {
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #e0e0e0; /* Reverted back to light gray */
 }
 
 @media (max-width: 768px) {
-  .faq-page {
+  .faq {
     padding: 1rem 0.5rem;
   }
   
@@ -57,11 +50,11 @@
     padding: 1rem;
   }
   
-  .faq-container h1 {
+  .faq h1 {
     font-size: 2rem;
   }
   
-  .faq-container h2 {
+  .faq h2 {
     font-size: 1.3rem;
   }
 }

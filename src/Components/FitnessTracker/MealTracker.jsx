@@ -14,10 +14,12 @@ const MealTracker = ({ user }) => {
     carbs: '',
     fat: '',
     mealType: 'breakfast',
-    date: new Date().toISOString().split('T')[0],
-    quantity: '1',
-    unit: 'piece' // Default unit
+    date: new Date().toISOString().split('T')[0]
   });
+  
+  // Added state for food quantity with unit options
+  const [foodQuantity, setFoodQuantity] = useState('');
+  const [foodUnit, setFoodUnit] = useState('grams'); // Default to grams
 
   // Load user meals when component mounts
   useEffect(() => {
@@ -39,48 +41,8 @@ const MealTracker = ({ user }) => {
     loadMeals();
   }, [user]);
 
-  // Function to convert fractions to decimals
-  const parseQuantity = (quantityStr) => {
-    // Handle fraction inputs like ½, ¼, etc.
-    const fractions = {
-      '½': 0.5,
-      '¼': 0.25,
-      '¾': 0.75,
-      '⅓': 0.333,
-      '⅔': 0.667,
-      '⅕': 0.2,
-      '⅖': 0.4,
-      '⅗': 0.6,
-      '⅘': 0.8,
-      '⅙': 0.167,
-      '⅚': 0.833,
-      '⅛': 0.125,
-      '⅜': 0.375,
-      '⅝': 0.625,
-      '⅞': 0.875
-    };
-    
-    // Check if it's a fraction
-    if (fractions[quantityStr]) {
-      return fractions[quantityStr];
-    }
-    
-    // Handle mixed numbers like "1 ½"
-    const mixedNumberRegex = /^(\d+)\s+([½¼¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])$/;
-    const mixedMatch = quantityStr.match(mixedNumberRegex);
-    if (mixedMatch) {
-      const whole = parseFloat(mixedMatch[1]);
-      const fraction = fractions[mixedMatch[2]];
-      return whole + fraction;
-    }
-    
-    // Handle decimal numbers
-    const decimal = parseFloat(quantityStr);
-    return isNaN(decimal) ? 1 : decimal;
-  };
-
-  const fetchNutritionData = async (foodName) => {
-    if (!foodName.trim()) return;
+  const fetchNutritionData = async (foodName, quantity, unit) => {
+    if (!foodName.trim() || !quantity) return;
     
     setFetchingNutrition(true);
     setMessage('');
@@ -133,17 +95,64 @@ const MealTracker = ({ user }) => {
       try {
         const nutritionData = JSON.parse(cleanedNutritionInfo);
         
-        // Update the form fields with the fetched nutrition data
+        // More accurate conversion factors for different units (based on 100g reference)
+        // Updated to be more realistic for common foods
+        const conversionFactors = {
+          grams: quantity / 100,
+          pieces: quantity * 0.8, // Increased from 0.1 to 0.8 (80g average for items like dosa, apple, etc.)
+          kg: quantity * 10,
+          ounces: quantity * 0.2835, // 1 ounce ≈ 28.35g
+          lbs: quantity * 4.536, // 1 lb ≈ 453.6g
+          cups: quantity * 0.24, // Assuming average cup is ~24g, can be adjusted
+          tbsp: quantity * 0.15, // 1 tbsp ≈ 15g
+          tsp: quantity * 0.05 // 1 tsp ≈ 5g
+        };
+        
+        // Special handling for specific foods with known average weights
+        const specialFoodFactors = {
+          'dosa': 0.8, // 80g average
+          'apple': 0.15, // 150g average
+          'banana': 0.12, // 120g average
+          'orange': 0.13, // 130g average
+          'roti': 0.06, // 60g average
+          'chapati': 0.06, // 60g average
+          'idli': 0.07, // 70g average
+          'bread slice': 0.03, // 30g average
+          'egg': 0.05, // 50g average
+          'chicken breast': 1.5, // 150g average
+          'rice bowl': 1.2 // 120g average
+        };
+        
+        // Check if we have a special factor for this food
+        let multiplier;
+        const foodNameLower = foodName.toLowerCase();
+        let foundSpecial = false;
+        
+        for (const [specialFood, factor] of Object.entries(specialFoodFactors)) {
+          if (foodNameLower.includes(specialFood)) {
+            multiplier = quantity * factor;
+            foundSpecial = true;
+            break;
+          }
+        }
+        
+        // If no special factor found, use general conversion
+        if (!foundSpecial) {
+          multiplier = conversionFactors[unit] || conversionFactors.grams;
+        }
+        
+        // Update the form fields with the calculated nutrition data
         setNewMeal(prev => ({
           ...prev,
-          name: foodName,
-          calories: nutritionData.calories || '',
-          protein: nutritionData.protein_g || '',
-          carbs: nutritionData.carbs_g || '',
-          fat: nutritionData.fat_g || ''
+          calories: Math.round((nutritionData.calories || 0) * multiplier),
+          protein: Math.round((nutritionData.protein_g || 0) * multiplier * 10) / 10,
+          carbs: Math.round((nutritionData.carbs_g || 0) * multiplier * 10) / 10,
+          fat: Math.round((nutritionData.fat_g || 0) * multiplier * 10) / 10
         }));
         
-        setMessage(`Nutrition facts for ${nutritionData.food} fetched successfully!`);
+        // Show more informative message
+        const unitDisplay = foundSpecial ? 'piece (avg weight)' : unit;
+        setMessage(`Nutrition facts for ${nutritionData.food} (${quantity} ${unitDisplay}) fetched successfully!`);
       } catch (parseError) {
         console.error('Error parsing nutrition data:', parseError);
         console.error('Raw nutrition info:', nutritionInfo);
@@ -157,104 +166,26 @@ const MealTracker = ({ user }) => {
     }
   };
 
-  const handleFoodNameChange = (e) => {
-    const { value } = e.target;
-    setNewMeal(prev => ({
-      ...prev,
-      name: value
-    }));
+  const handleGetNutrition = () => {
+    if (!newMeal.name.trim()) {
+      setMessage('Please enter a food name');
+      return;
+    }
     
-    // Fetch nutrition data when meal name is updated
-    clearTimeout(window.nutritionFetchTimeout);
-    window.nutritionFetchTimeout = setTimeout(() => {
-      if (value.trim()) {
-        fetchNutritionData(value);
-      }
-    }, 500);
+    if (!foodQuantity || isNaN(foodQuantity) || parseFloat(foodQuantity) <= 0) {
+      setMessage('Please enter a valid quantity');
+      return;
+    }
+    
+    fetchNutritionData(newMeal.name, parseFloat(foodQuantity), foodUnit);
   };
 
-  const handleQuantityChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setNewMeal(prev => ({
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleUnitChange = (e) => {
-    const { value } = e.target;
-    setNewMeal(prev => ({
-      ...prev,
-      unit: value
-    }));
-  };
-
-  const calculateNutritionWithQuantity = () => {
-    const baseCalories = parseFloat(newMeal.calories) || 0;
-    const baseProtein = parseFloat(newMeal.protein) || 0;
-    const baseCarbs = parseFloat(newMeal.carbs) || 0;
-    const baseFat = parseFloat(newMeal.fat) || 0;
-    
-    const quantity = parseQuantity(newMeal.quantity);
-    
-    // For all calculations, we use 100g as the base unit since that's what the API returns
-    const baseUnitInGrams = 100;
-    
-    // Convert entered quantity to grams based on the selected unit
-    let quantityInGrams = quantity;
-    
-    switch (newMeal.unit) {
-      case 'g':
-        // Already in grams
-        break;
-      case 'kg':
-        quantityInGrams = quantity * 1000;
-        break;
-      case 'mg':
-        quantityInGrams = quantity / 1000;
-        break;
-      case 'ml':
-        // Assume 1ml ≈ 1g for most foods
-        break;
-      case 'l':
-        quantityInGrams = quantity * 1000;
-        break;
-      case 'cup':
-        quantityInGrams = quantity * 240; // Approximate 1 cup = 240g
-        break;
-      case 'tbsp':
-        quantityInGrams = quantity * 15; // Approximate 1 tbsp = 15g
-        break;
-      case 'tsp':
-        quantityInGrams = quantity * 5; // Approximate 1 tsp = 5g
-        break;
-      case 'oz':
-        quantityInGrams = quantity * 28.35; // 1 oz = 28.35g
-        break;
-      case 'lb':
-        quantityInGrams = quantity * 453.59; // 1 lb = 453.59g
-        break;
-      case 'piece':
-        // For pieces, we assume an average weight
-        // This is a simplification - in reality, this would vary by food type
-        quantityInGrams = quantity * 100; // Assume 1 piece = 100g on average
-        break;
-      default:
-        // Default to grams if unknown unit
-        break;
-    }
-    
-    // Calculate nutrition based on grams
-    // Formula: (base nutrition per 100g) * (quantity in grams / 100)
-    const multiplier = quantityInGrams / baseUnitInGrams;
-    
-    return {
-      calories: Math.round(baseCalories * multiplier),
-      protein: parseFloat((baseProtein * multiplier).toFixed(2)),
-      carbs: parseFloat((baseCarbs * multiplier).toFixed(2)),
-      fat: parseFloat((baseFat * multiplier).toFixed(2)),
-      quantityInGrams: quantityInGrams
-    };
   };
 
   const handleSubmit = async (e) => {
@@ -264,20 +195,12 @@ const MealTracker = ({ user }) => {
 
     try {
       if (user && user.uid) {
-        // Calculate nutrition values based on quantity
-        const calculatedNutrition = calculateNutritionWithQuantity();
-        
         const mealData = {
-          name: newMeal.name,
-          calories: calculatedNutrition.calories,
-          protein: calculatedNutrition.protein,
-          carbs: calculatedNutrition.carbs,
-          fat: calculatedNutrition.fat,
-          mealType: newMeal.mealType,
-          date: newMeal.date,
-          quantity: parseQuantity(newMeal.quantity),
-          unit: newMeal.unit,
-          grams: calculatedNutrition.quantityInGrams
+          ...newMeal,
+          calories: parseInt(newMeal.calories) || 0,
+          protein: parseInt(newMeal.protein) || 0,
+          carbs: parseInt(newMeal.carbs) || 0,
+          fat: parseInt(newMeal.fat) || 0
         };
         
         const result = await fitnessService.logMeal(user.uid, mealData);
@@ -294,10 +217,11 @@ const MealTracker = ({ user }) => {
             carbs: '',
             fat: '',
             mealType: 'breakfast',
-            date: new Date().toISOString().split('T')[0],
-            quantity: '1',
-            unit: 'piece'
+            date: new Date().toISOString().split('T')[0]
           });
+          // Reset quantity and unit
+          setFoodQuantity('');
+          setFoodUnit('grams');
           
           // Dispatch a custom event to notify the dashboard to refresh
           window.dispatchEvent(new CustomEvent('mealLogged', { detail: { userId: user.uid } }));
@@ -395,24 +319,6 @@ const MealTracker = ({ user }) => {
 
   const groupedMeals = groupMealsByDate();
 
-  // Display calculated nutrition values
-  const displayNutrition = calculateNutritionWithQuantity();
-
-  // Unit options for different food types
-  const unitOptions = [
-    { value: 'piece', label: 'Piece(s)' },
-    { value: 'g', label: 'Gram(s)' },
-    { value: 'kg', label: 'Kilogram(s)' },
-    { value: 'mg', label: 'Milligram(s)' },
-    { value: 'ml', label: 'Milliliter(s)' },
-    { value: 'l', label: 'Liter(s)' },
-    { value: 'cup', label: 'Cup(s)' },
-    { value: 'tbsp', label: 'Tablespoon(s)' },
-    { value: 'tsp', label: 'Teaspoon(s)' },
-    { value: 'oz', label: 'Ounce(s)' },
-    { value: 'lb', label: 'Pound(s)' }
-  ];
-
   return (
     <div className="meal-tracker">
       <h2>Meal Tracker</h2>
@@ -434,11 +340,10 @@ const MealTracker = ({ user }) => {
                   type="text"
                   name="name"
                   value={newMeal.name}
-                  onChange={handleFoodNameChange}
-                  placeholder="e.g., Biryani, Egg Dosa, Milk"
+                  onChange={handleChange}
+                  placeholder="e.g., Oatmeal with Berries"
                   required
                 />
-                {fetchingNutrition && <span className="loading-text">Fetching nutrition data...</span>}
               </div>
               
               <div className="form-group">
@@ -446,7 +351,7 @@ const MealTracker = ({ user }) => {
                 <select
                   name="mealType"
                   value={newMeal.mealType}
-                  onChange={handleQuantityChange}
+                  onChange={handleChange}
                 >
                   <option value="breakfast">Breakfast</option>
                   <option value="lunch">Lunch</option>
@@ -456,31 +361,47 @@ const MealTracker = ({ user }) => {
               </div>
             </div>
             
+            {/* Updated quantity input section with unit dropdown */}
             <div className="form-row">
               <div className="form-group">
                 <label>Quantity</label>
-                <input
-                  type="text"
-                  name="quantity"
-                  value={newMeal.quantity}
-                  onChange={handleQuantityChange}
-                  placeholder="e.g., 1, 2, 1.5, ½"
-                  required
-                />
+                <div className="quantity-input-group">
+                  <input
+                    type="number"
+                    value={foodQuantity}
+                    onChange={(e) => setFoodQuantity(e.target.value)}
+                    placeholder="Enter amount"
+                    min="0"
+                    step="0.1"
+                    className="quantity-input"
+                  />
+                  <select
+                    value={foodUnit}
+                    onChange={(e) => setFoodUnit(e.target.value)}
+                    className="unit-select"
+                  >
+                    <option value="grams">Grams</option>
+                    <option value="pieces">Pieces</option>
+                    <option value="kg">Kilograms</option>
+                    <option value="ounces">Ounces</option>
+                    <option value="lbs">Pounds</option>
+                    <option value="cups">Cups</option>
+                    <option value="tbsp">Tablespoons</option>
+                    <option value="tsp">Teaspoons</option>
+                  </select>
+                </div>
               </div>
               
               <div className="form-group">
-                <label>Unit</label>
-                <select
-                  value={newMeal.unit}
-                  onChange={handleUnitChange}
+                <label>&nbsp;</label>
+                <button 
+                  type="button" 
+                  className="get-nutrition-button"
+                  onClick={handleGetNutrition}
+                  disabled={fetchingNutrition}
                 >
-                  {unitOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  {fetchingNutrition ? 'Fetching...' : 'Get Nutrition'}
+                </button>
               </div>
             </div>
             
@@ -490,14 +411,10 @@ const MealTracker = ({ user }) => {
                 <input
                   type="number"
                   name="calories"
-                  value={displayNutrition.calories}
-                  onChange={handleQuantityChange}
+                  value={newMeal.calories}
+                  onChange={handleChange}
                   placeholder="0"
                 />
-                <small>
-                  Based on {parseQuantity(newMeal.quantity)} {newMeal.unit}(s) = {displayNutrition.quantityInGrams?.toFixed(1)}g
-                  {newMeal.calories && ` (Original: ${newMeal.calories} cal/100g)`}
-                </small>
               </div>
               
               <div className="form-group">
@@ -505,13 +422,10 @@ const MealTracker = ({ user }) => {
                 <input
                   type="number"
                   name="protein"
-                  value={displayNutrition.protein}
-                  onChange={handleQuantityChange}
+                  value={newMeal.protein}
+                  onChange={handleChange}
                   placeholder="0"
                 />
-                <small>
-                  Based on {parseQuantity(newMeal.quantity)} {newMeal.unit}(s)
-                </small>
               </div>
             </div>
             
@@ -521,13 +435,10 @@ const MealTracker = ({ user }) => {
                 <input
                   type="number"
                   name="carbs"
-                  value={displayNutrition.carbs}
-                  onChange={handleQuantityChange}
+                  value={newMeal.carbs}
+                  onChange={handleChange}
                   placeholder="0"
                 />
-                <small>
-                  Based on {parseQuantity(newMeal.quantity)} {newMeal.unit}(s)
-                </small>
               </div>
               
               <div className="form-group">
@@ -535,13 +446,10 @@ const MealTracker = ({ user }) => {
                 <input
                   type="number"
                   name="fat"
-                  value={displayNutrition.fat}
-                  onChange={handleQuantityChange}
+                  value={newMeal.fat}
+                  onChange={handleChange}
                   placeholder="0"
                 />
-                <small>
-                  Based on {parseQuantity(newMeal.quantity)} {newMeal.unit}(s)
-                </small>
               </div>
             </div>
             
@@ -551,14 +459,14 @@ const MealTracker = ({ user }) => {
                 type="date"
                 name="date"
                 value={newMeal.date}
-                onChange={handleQuantityChange}
+                onChange={handleChange}
               />
             </div>
             
             <button 
               type="submit" 
               className="log-meal-button"
-              disabled={loading || fetchingNutrition}
+              disabled={loading}
             >
               {loading ? 'Logging...' : 'Log Meal'}
             </button>
@@ -620,9 +528,6 @@ const MealTracker = ({ user }) => {
                             <span>{meal.protein || 0}g protein</span>
                             <span>{meal.carbs || 0}g carbs</span>
                             <span>{meal.fat || 0}g fat</span>
-                          </div>
-                          <div className="meal-quantity">
-                            Quantity: {meal.quantity} {meal.unit}(s) ({meal.grams?.toFixed(1)}g)
                           </div>
                         </div>
                         <button 
