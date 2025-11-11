@@ -376,32 +376,6 @@ const NewRegistrations = () => {
     }
   };
 
-  // Format payment method for display
-  const formatPaymentMethod = (method) => {
-    if (!method) return 'Razorpay';
-    
-    // Map common payment methods to user-friendly names
-    const methodMap = {
-      'card': 'Card',
-      'credit_card': 'Credit Card',
-      'debit_card': 'Debit Card',
-      'creditcard': 'Credit Card',
-      'debitcard': 'Debit Card',
-      'upi': 'UPI',
-      'netbanking': 'Internet Banking',
-      'net_banking': 'Internet Banking',
-      'wallet': 'Wallet',
-      'emi': 'EMI',
-      'cod': 'Cash on Delivery',
-      'free_trial': 'Free Trial',
-      'razorpay': 'Razorpay'
-    };
-    
-    // Return mapped name or capitalize the method name
-    return methodMap[method.toLowerCase()] || 
-           method.charAt(0).toUpperCase() + method.slice(1).replace(/_/g, ' ');
-  };
-
   // Function to determine display name for payment method (similar to bookings component)
   const getPaymentMethodDisplayName = (booking) => {
     if (booking.isFreeTrial || booking.paymentMethod === 'free_trial') {

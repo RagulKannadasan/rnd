@@ -19,7 +19,6 @@ const QRScanner = () => {
   const [phoneNumberSearch, setPhoneNumberSearch] = useState(''); // New state for phone number search
   const [userBookingStatus, setUserBookingStatus] = useState(null); // New state for user booking status
   const [searching, setSearching] = useState(false); // New state for search loading
-  const [freeTrialStatus, setFreeTrialStatus] = useState(null); // New state for free trial status
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);

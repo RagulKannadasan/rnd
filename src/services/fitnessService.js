@@ -8,9 +8,7 @@ import {
   addDoc, 
   query, 
   where, 
-  orderBy, 
   getDocs,
-  limit,
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase';

@@ -819,9 +819,6 @@ Thank you for booking with R&D - Run and Develop!
                   ) : bookings && bookings.some(booking => booking.isFreeTrial) ? (
                     // Show free trial only if no paid bookings exist
                     (() => {
-                      // Find the free trial booking to get plan name
-                      const freeTrialBooking = bookings.find(booking => booking.isFreeTrial);
-                        
                       return (
                         <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                           <h4>Free Trial</h4>

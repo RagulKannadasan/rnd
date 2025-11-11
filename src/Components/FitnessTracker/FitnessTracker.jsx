@@ -12,7 +12,6 @@ import fitnessService from '../../services/fitnessService';
 const FitnessTracker = () => {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [userProfile, setUserProfile] = useState(null);
   const [profileSetupComplete, setProfileSetupComplete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0); // Used to force refresh of dashboard
@@ -68,7 +67,6 @@ const FitnessTracker = () => {
       try {
         const result = await fitnessService.getUserProfile(currentUser.uid);
         if (result.success && result.data.age && result.data.currentWeight && result.data.targetWeight) {
-          setUserProfile(result.data);
           setProfileSetupComplete(true);
         } else {
           setProfileSetupComplete(false);
@@ -83,7 +81,6 @@ const FitnessTracker = () => {
   };
 
   const handleProfileUpdate = (profile) => {
-    setUserProfile(profile);
     // Check if profile setup is complete
     if (profile.age && profile.currentWeight && profile.targetWeight) {
       setProfileSetupComplete(true);

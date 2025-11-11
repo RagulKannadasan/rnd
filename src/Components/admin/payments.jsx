@@ -14,7 +14,6 @@ const Payments = () => {
   const [filterPaymentMethod, setFilterPaymentMethod] = useState('all');
   const [paymentMethodCache, setPaymentMethodCache] = useState({}); // Cache for payment method details
   const [userCache, setUserCache] = useState({}); // Cache for user details
-  const [updatingPayment, setUpdatingPayment] = useState(null); // Track which payment is being updated
   const [notification, setNotification] = useState(null); // For in-app notifications
 
   const fetchPayments = useCallback(async () => {
@@ -114,7 +113,7 @@ const Payments = () => {
     if (payments.length > 0) {
       fetchUserDetails();
     }
-  }, [payments, userCache]);
+  }, [payments, userCache, fetchUserDetailsById]);
 
   useEffect(() => {
     fetchPayments();
@@ -145,10 +144,10 @@ const Payments = () => {
     if (payments.length > 0) {
       fetchAllPaymentMethodDetails();
     }
-  }, [payments, paymentMethodCache]);
+  }, [payments, paymentMethodCache, fetchPaymentMethodDetails]);
 
   // Function to fetch user details by ID
-  const fetchUserDetailsById = async (userId) => {
+  const fetchUserDetailsById = useCallback(async (userId) => {
     // Check cache first
     if (userCache[userId]) {
       return userCache[userId];
@@ -189,7 +188,7 @@ const Payments = () => {
       console.error('Error fetching user details for ID:', userId, error);
     }
     return null;
-  };
+  }, [userCache]);
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -234,7 +233,7 @@ const Payments = () => {
   };
 
   // Function to fetch actual payment method from Razorpay
-  const fetchPaymentMethodDetails = async (paymentId) => {
+  const fetchPaymentMethodDetails = useCallback(async (paymentId) => {
     // Check cache first
     if (paymentMethodCache[paymentId]) {
       return paymentMethodCache[paymentId];
@@ -277,7 +276,7 @@ const Payments = () => {
       // Return null to indicate failure but prevent app crash
       return null;
     }
-  };
+  }, [paymentMethodCache]);
 
   // Function to determine display name for payment method
   const getPaymentMethodDisplayName = (payment) => {
@@ -423,8 +422,6 @@ const Payments = () => {
   // Function to update payment status
   const updatePaymentStatus = async (paymentId, newStatus) => {
     try {
-      setUpdatingPayment(paymentId);
-      
       // Update in Firestore
       const bookingRef = doc(db, 'bookings', paymentId);
       await updateDoc(bookingRef, {
@@ -448,47 +445,7 @@ const Payments = () => {
       setError('Failed to update payment status.');
       showNotification('Failed to update payment status.', 'error');
     } finally {
-      setUpdatingPayment(null);
-    }
-  };
-
-  // Function to update all payments from today to 'confirmed' status
-  const confirmTodaysPayments = async () => {
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const todaysPayments = payments.filter(payment => {
-        // Check if payment was made today
-        const paymentDate = payment.bookingDate;
-        if (!paymentDate) return false;
-        
-        const paymentDateObj = paymentDate instanceof Date ? paymentDate : new Date(paymentDate);
-        paymentDateObj.setHours(0, 0, 0, 0);
-        
-        return paymentDateObj.getTime() === today.getTime() && payment.status !== 'confirmed';
-      });
-      
-      if (todaysPayments.length === 0) {
-        showNotification('No payments found for today that need confirmation.', 'info');
-        return;
-      }
-      
-      // Ask for confirmation using in-app notification approach
-      if (!window.confirm(`Confirm ${todaysPayments.length} payments from today?`)) {
-        return;
-      }
-      
-      // Update all today's payments
-      for (const payment of todaysPayments) {
-        await updatePaymentStatus(payment.id, 'confirmed');
-      }
-      
-      showNotification(`${todaysPayments.length} payments confirmed successfully!`, 'success');
-    } catch (error) {
-      console.error('Error confirming today\'s payments:', error);
-      setError('Failed to confirm today\'s payments.');
-      showNotification('Failed to confirm today\'s payments.', 'error');
+      // no cleanup needed currently
     }
   };
 

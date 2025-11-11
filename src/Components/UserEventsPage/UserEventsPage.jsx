@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -18,7 +18,6 @@ function UserEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(Date.now()); // Add refresh tracking
-  const [mainEvent, setMainEvent] = useState(null); // Main event from Firebase
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -53,11 +52,6 @@ function UserEventsPage() {
   useEffect(() => {
     fetchEvents();
   }, [lastRefresh]); // Add lastRefresh as dependency
-
-  // Fetch the main upcoming event
-  const fetchMainEvent = async () => {
-    // This function is now handled within fetchEvents
-  };
 
   // Check for refresh flag
   useEffect(() => {
@@ -164,95 +158,6 @@ function UserEventsPage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user]);
-
-  // Function to check if user is eligible for free trial
-  const checkFreeTrialEligibility = async (userId, phoneNumber) => {
-    try {
-      // Check if user has ANY existing free trial bookings (not just within 24 hours)
-      const bookingsRef = collection(db, 'bookings');
-      const userQuery = query(bookingsRef, where('userId', '==', userId), where('mode', '==', 'free_trial'));
-      
-      // Create a promise with timeout for the user query
-      const userQueryWithTimeout = new Promise(async (resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error('Timeout while checking user bookings'));
-        }, 10000); // 10 second timeout
-        
-        try {
-          const result = await getDocs(userQuery);
-          clearTimeout(timeoutId);
-          resolve(result);
-        } catch (error) {
-          clearTimeout(timeoutId);
-          reject(error);
-        }
-      });
-      
-      const userQuerySnapshot = await userQueryWithTimeout;
-      
-      // If user has any free trial bookings, they're not eligible
-      if (!userQuerySnapshot.empty) {
-        return false;
-      }
-      
-      // Check if phone number has been used for ANY free trial (not just within 24 hours)
-      if (phoneNumber) {
-        // Normalize phone number to E.164 format before comparison
-        // Firebase Auth stores phone numbers in E.164 format (+91XXXXXXXXXX)
-        // But our Firestore user profile stores it in 10-digit format (XXXXXXXXXX)
-        let normalizedPhone = phoneNumber;
-        
-        // If it's already in E.164 format, use it as is
-        if (phoneNumber.startsWith('+91') && phoneNumber.length === 13) {
-          normalizedPhone = phoneNumber;
-        } 
-        // If it's in 10-digit format, convert to E.164
-        else if (phoneNumber.length === 10 && /^\d+$/.test(phoneNumber)) {
-          normalizedPhone = '+91' + phoneNumber;
-        }
-        // If it's in any other format, try to extract digits and convert
-        else {
-          const digitsOnly = phoneNumber.replace(/\D/g, '');
-          if (digitsOnly.length === 10) {
-            normalizedPhone = '+91' + digitsOnly;
-          } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
-            normalizedPhone = '+' + digitsOnly;
-          }
-        }
-        
-        const phoneQuery = query(bookingsRef, where('phoneNumber', '==', normalizedPhone), where('mode', '==', 'free_trial'));
-        
-        // Create a promise with timeout for the phone query
-        const phoneQueryWithTimeout = new Promise(async (resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            reject(new Error('Timeout while checking phone number'));
-          }, 10000); // 10 second timeout
-          
-          try {
-            const result = await getDocs(phoneQuery);
-            clearTimeout(timeoutId);
-            resolve(result);
-          } catch (error) {
-            clearTimeout(timeoutId);
-            reject(error);
-          }
-        });
-        
-        const phoneQuerySnapshot = await phoneQueryWithTimeout;
-        
-        // If phone number has been used for any free trial, they're not eligible
-        if (!phoneQuerySnapshot.empty) {
-          return false;
-        }
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error checking free trial eligibility:', error);
-      // On error (including timeout), default to eligible
-      return true;
-    }
-  };
 
   const fetchEvents = async () => {
     try {
@@ -393,161 +298,6 @@ function UserEventsPage() {
     }
     
     return false;
-  };
-
-  // Function to check if user has booked within the last 5 days based on plan (excluding free trials)
-  const hasBookedRecently = useCallback((planName) => {
-    // Get bookings from localStorage
-    const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-    
-    if (!localBookings || localBookings.length === 0) {
-      return false;
-    }
-    
-    // Get current time for comparison
-    const now = new Date();
-    const fiveDaysAgo = new Date(now.getTime() - (5 * 24 * 60 * 60 * 1000)); // 5 days ago
-    
-    // Check if any booking was made within the last 5 days for this plan (excluding free trials)
-    return localBookings.some(booking => {
-      // Skip free trial bookings
-      if (booking.mode === 'free_trial') {
-        return false;
-      }
-      
-      // Check if booking matches the plan name
-      if (booking.eventName !== planName) {
-        return false;
-      }
-      
-      // Check if booking was made within the last 5 days
-      const bookingDate = booking.bookingDate || booking.createdAt;
-      if (bookingDate) {
-        let bookingTime;
-        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-          bookingTime = bookingDate.toDate();
-        } else if (bookingDate instanceof Date) {
-          bookingTime = bookingDate;
-        } else {
-          bookingTime = new Date(bookingDate);
-        }
-        
-        return bookingTime >= fiveDaysAgo && bookingTime <= now;
-      }
-      
-      return false;
-    });
-  }, []);
-
-  // Function to check if user has booked a monthly plan within the last 30 days (excluding free trials)
-  const hasBookedMonthlyRecently = useCallback(() => {
-    // Get bookings from localStorage
-    const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-    
-    if (!localBookings || localBookings.length === 0) {
-      return false;
-    }
-    
-    // Get current time for comparison
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days ago
-    
-    // Check if any booking was made within the last 30 days for Monthly Membership (excluding free trials)
-    return localBookings.some(booking => {
-      // Skip free trial bookings
-      if (booking.mode === 'free_trial') {
-        return false;
-      }
-      
-      // Check if booking is for Monthly Membership
-      if (booking.eventName !== 'Monthly Membership') {
-        return false;
-      }
-      
-      // Check if booking was made within the last 30 days
-      const bookingDate = booking.bookingDate || booking.createdAt;
-      if (bookingDate) {
-        let bookingTime;
-        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-          bookingTime = bookingDate.toDate();
-        } else if (bookingDate instanceof Date) {
-          bookingTime = bookingDate;
-        } else {
-          bookingTime = new Date(bookingDate);
-        }
-        
-        return bookingTime >= thirtyDaysAgo && bookingTime <= now;
-      }
-      
-      return false;
-    });
-  }, []);
-
-  // New function to check if user booked within the last 5 days (for regular plans)
-  const hasUserBookedWithinFiveDays = (eventId, eventDate) => {
-    if (!userBookings || userBookings.length === 0) {
-      return false;
-    }
-
-    const targetEventId = String(eventId);
-    const now = new Date();
-    const fiveDaysAgo = new Date(now.getTime() - (5 * 24 * 60 * 60 * 1000)); // 5 days ago
-    
-    // Check if any booking was made within the last 5 days
-    return userBookings.some(booking => {
-      // First check if the booking is for the target event
-      let isTargetEvent = false;
-      
-      // Check multiple possible field names
-      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
-      if (bookingEventId) {
-        isTargetEvent = String(bookingEventId) === targetEventId;
-      }
-      
-      // If this booking is not for the target event, skip it
-      if (!isTargetEvent) {
-        return false;
-      }
-      
-      // If eventDate is provided, also check if the booking is for the same date
-      if (eventDate) {
-        const bookingEventDate = booking.eventDate;
-        if (bookingEventDate) {
-          let bookingDate;
-          if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
-            bookingDate = bookingEventDate.toDate();
-          } else if (bookingEventDate instanceof Date) {
-            bookingDate = bookingEventDate;
-          } else {
-            bookingDate = new Date(bookingEventDate);
-          }
-          
-          // Compare dates
-          const eventDateObj = new Date(eventDate);
-          if (bookingDate.toDateString() !== eventDateObj.toDateString()) {
-            // Different date, so not the same event instance
-            return false;
-          }
-        }
-      }
-      
-      // Now check if the booking was made within the last 5 days
-      const bookingCreationDate = booking.bookingDate || booking.createdAt;
-      if (bookingCreationDate) {
-        let bookingTime;
-        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
-          bookingTime = bookingCreationDate.toDate();
-        } else if (bookingCreationDate instanceof Date) {
-          bookingTime = bookingCreationDate;
-        } else {
-          bookingTime = new Date(bookingCreationDate);
-        }
-        
-        return bookingTime >= fiveDaysAgo && bookingTime <= now;
-      }
-      
-      return false;
-    });
   };
 
   // Function to check if user booked a monthly subscription within the last 30 days
@@ -733,114 +483,6 @@ function UserEventsPage() {
   // Calculate progress percentage
   const getProgressPercentage = (participants, maxParticipants) => {
     return Math.min(100, (participants / maxParticipants) * 100);
-  };
-
-  // ENHANCED VERSION - Check if a user has already booked a specific event WITH DEBUGGING AND TODAY'S CHECK
-  const hasUserBookedEvent = (eventId, eventDate) => {
-    // Make sure we have user bookings data
-    if (!userBookings || userBookings.length === 0) {
-      console.log('No user bookings found');
-      return false;
-    }
-    
-    // Convert eventId to string for comparison
-    const targetEventId = String(eventId);
-    console.log('Checking if user booked event:', targetEventId);
-    console.log('User bookings data:', userBookings);
-    
-    // Get today's date for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Enhanced approach - check if any booking has this event ID
-    for (const booking of userBookings) {
-      // Check multiple possible field names and ensure consistent string comparison
-      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
-      if (bookingEventId !== undefined && bookingEventId !== null) {
-        const bookingEventIdStr = String(bookingEventId);
-        console.log('Comparing with booking event ID:', bookingEventIdStr);
-        // Use multiple comparison methods for better compatibility
-        if (bookingEventIdStr === targetEventId || 
-            bookingEventIdStr == targetEventId ||
-            bookingEventIdStr.trim() === targetEventId.trim()) {
-          
-          // If eventDate is provided, also check if the booking is for the same date
-          if (eventDate) {
-            const bookingEventDate = booking.eventDate;
-            if (bookingEventDate) {
-              let bookingDate;
-              if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
-                bookingDate = bookingEventDate.toDate();
-              } else if (bookingEventDate instanceof Date) {
-                bookingDate = bookingEventDate;
-              } else {
-                bookingDate = new Date(bookingEventDate);
-              }
-              
-              // Compare dates
-              const eventDateObj = new Date(eventDate);
-              if (bookingDate.toDateString() === eventDateObj.toDateString()) {
-                // Check if this booking was made today
-                const bookingCreationDate = booking.bookingDate || booking.createdAt;
-                if (bookingCreationDate) {
-                  let bookingTime;
-                  if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
-                    bookingTime = bookingCreationDate.toDate();
-                  } else if (bookingCreationDate instanceof Date) {
-                    bookingTime = bookingCreationDate;
-                  } else {
-                    bookingTime = new Date(bookingCreationDate);
-                  }
-                  
-                  // Set time to beginning of day for comparison
-                  bookingTime.setHours(0, 0, 0, 0);
-                  
-                  // If booking was made today, return true
-                  if (bookingTime.getTime() === today.getTime()) {
-                    console.log('MATCH FOUND FOR TODAY!');
-                    return true;
-                  }
-                }
-                
-                // For backward compatibility, return true for any match
-                console.log('MATCH FOUND!');
-                return true;
-              }
-            }
-          } else {
-            // If no eventDate provided, use original logic
-            // Check if this booking was made today
-            const bookingDate = booking.bookingDate || booking.createdAt;
-            if (bookingDate) {
-              let bookingTime;
-              if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-                bookingTime = bookingDate.toDate();
-              } else if (bookingDate instanceof Date) {
-                bookingTime = bookingDate;
-              } else {
-                bookingTime = new Date(bookingDate);
-              }
-              
-              // Set time to beginning of day for comparison
-              bookingTime.setHours(0, 0, 0, 0);
-              
-              // If booking was made today, return true
-              if (bookingTime.getTime() === today.getTime()) {
-                console.log('MATCH FOUND FOR TODAY!');
-                return true;
-              }
-            }
-            
-            // For backward compatibility, return true for any match
-            console.log('MATCH FOUND!');
-            return true;
-          }
-        }
-      }
-    }
-    
-    console.log('No match found for event ID:', targetEventId);
-    return false;
   };
 
   if (loading) {
