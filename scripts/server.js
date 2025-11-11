@@ -46,7 +46,7 @@ const allowedOrigins = [
   'http://localhost:5003',
   'http://192.168.1.21:3000',
   // Netlify frontend URLs
-  'https://runanddevelop.netlify.app',
+  'https://rndtest.netlify.app',
   'https://*.netlify.app',
   // Render frontend URLs (if you deploy frontend to Render)
   'https://*.onrender.com'
