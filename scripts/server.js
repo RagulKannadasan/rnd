@@ -39,26 +39,52 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware with CORS configuration for development
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:5003',
-    'http://192.168.1.21:3000',
-    'https://*.ngrok.io',
-    'https://*.ngrok-free.app',
-    'https://*.loca.lt',
-    'https://*.serveo.net',
-    'https://*',
-    'http://*',
+// Middleware with CORS configuration for development and production
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5003',
+  'http://192.168.1.21:3000',
+  // Netlify frontend URLs
+  'https://runanddevelop.netlify.app',
+  'https://*.netlify.app',
+  // Render frontend URLs (if you deploy frontend to Render)
+  'https://*.onrender.com'
+];
 
-    // ✅ Add this line below for your Netlify site:
-    'https://runanddevelop.netlify.app'
-  ],
+// In development, allow all origins for easier testing
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // In development, allow all origins
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    // In production, check against allowed origins
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (allowedOrigin.includes('*')) {
+        // Handle wildcard patterns
+        const pattern = allowedOrigin.replace('*', '.*');
+        const regex = new RegExp(`^${pattern}$`);
+        return regex.test(origin);
+      }
+      return origin === allowedOrigin;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
-}));
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 
 // Determine mode (test or live)

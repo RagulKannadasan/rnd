@@ -2,8 +2,11 @@ services:
   - type: web
     name: razorpay-backend
     env: node
+    plan: free
+    region: singapore
     buildCommand: npm install
     startCommand: npm run server
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
         value: 18
@@ -11,12 +14,19 @@ services:
         value: production
       - key: RAZORPAY_MODE
         value: test
-      - key: BACKEND_PORT
-        value: 5001
-      # Add your actual Razorpay keys here or set them in Render dashboard
+      - key: PORT
+        fromService:
+          type: web
+          name: razorpay-backend
+          property: port
+      # Add your actual Razorpay keys in Render dashboard (Environment tab)
+      # DO NOT commit actual keys to this file
       - key: RAZORPAY_KEY_ID_TEST
         sync: false
       - key: RAZORPAY_KEY_SECRET_TEST
         sync: false
       - key: RAZORPAY_WEBHOOK_SECRET
         sync: false
+      # Optional: Add Firebase service account if you need webhook booking creation
+      # - key: FIREBASE_SERVICE_ACCOUNT
+      #   sync: false
