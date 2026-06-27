@@ -84,9 +84,9 @@ const InstallPrompt = () => {
     <div className="install-prompt-overlay">
       <div className="install-prompt">
         <div className="install-prompt-logo">
-          <img src="/logo192.png" alt="Tech Vaseegrah Logo" />
+          <img src="/logo.png" alt="R&D Logo" />
         </div>
-        <h3>Install Tech Vaseegrah App for quick access 🚀</h3>
+        <h3>Install R&D App for quick access 🚀</h3>
         <div className="install-prompt-buttons">
           <button className="install-btn" onClick={handleInstallClick}>
             Install App

@@ -1,29 +1,13 @@
 
 {
-  "short_name": "Tech Vaseegrah",
-  "name": "Tech Vaseegrah App",
+  "short_name": "R&D",
+  "name": "R&D",
   "description": "Run and Develop - Fitness and Community App",
   "icons": [
     {
       "src": "/logo.png",
-      "sizes": "46x46",
+      "sizes": "any",
       "type": "image/png"
-    },
-    {
-      "src": "/android-chrome-192x192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "/android-chrome-512x512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "type": "image/png",
-      "sizes": "180x180",
-      "purpose": "maskable"
     }
   ],
   "start_url": "/",

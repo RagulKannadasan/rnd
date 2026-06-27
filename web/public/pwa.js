@@ -1,10 +1,10 @@
 // PWA Configuration
 const pwaConfig = {
   // PWA name
-  name: 'Tech Vaseegrah',
+  name: 'R&D',
   
   // Short name for home screen
-  shortName: 'Tech Vaseegrah',
+  shortName: 'R&D',
   
   // Description of the app
   description: 'Run and Develop - Fitness and Community App',
