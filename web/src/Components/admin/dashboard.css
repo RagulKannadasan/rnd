@@ -1,0 +1,179 @@
+/* === Modern Dashboard Styles (Reports Theme) === */
+
+/* --- General Layout & Theme --- */
+.dashboard-container {
+    background-color: #121212; /* Darker main background */
+    color: #e0e0e0;
+    padding: 25px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+}
+
+.dashboard-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff; /* Changed */
+    margin: 0 0 25px 0;
+    border-bottom: 1px solid #333; /* From reports theme */
+    padding-bottom: 20px; /* From reports theme */
+}
+
+/* --- Loading/Error States --- */
+.dashboard-loading, .dashboard-error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+    font-size: 16px;
+    color: #a0aec0; /* Changed */
+}
+
+/* --- Main Grid Layout --- */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 25px;
+    grid-template-areas:
+        "stats"
+        "chart";
+}
+
+/* --- 1. Stat Cards (Top Row) --- */
+.stat-cards-grid {
+    grid-area: stats;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+}
+
+.stat-card {
+    background-color: #1e1e1e; /* Dark card background */
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #4a5568; /* Dark border */
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.stat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.stat-card-title {
+    font-size: 14px;
+    color: #a0aec0; /* Light text */
+    font-weight: 500;
+}
+
+.stat-card-icon {
+    font-size: 22px;
+}
+
+.stat-card-body {
+    margin-bottom: 10px;
+}
+
+.stat-card-value {
+    font-size: 30px;
+    font-weight: 600;
+    color: #fff; /* White text */
+}
+
+.stat-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.stat-card-tag {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+}
+
+/* Tag Colors remain the same */
+.stat-card-tag.sales { background-color: #f39c12; }
+.stat-card-tag.views { background-color: #3498db; }
+.stat-card-tag.sales-green { background-color: #2ecc71; }
+.stat-card-tag.sales-red { background-color: #e74c3c; }
+
+.stat-card-trend {
+    font-size: 13px;
+    color: #a0aec0; /* Light text */
+}
+
+/* --- 2. Chart Card (Full Width) --- */
+.chart-card-container {
+    grid-area: chart;
+}
+
+.chart-card {
+    background-color: #1e1e1e; /* Dark background */
+    border-radius: 8px;
+    padding: 25px;
+    border: 1px solid #333; /* Dark border */
+    box-shadow: none;
+    height: 100%;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #a0aec0; /* Light text */
+    text-transform: uppercase;
+}
+
+.chart-menu {
+    font-size: 24px;
+    font-weight: 600;
+    color: #a0aec0; /* Light text */
+    cursor: pointer;
+}
+
+.chart-body {
+    text-align: center;
+}
+
+.chart-placeholder-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    background-color: #f4f7fa;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 1200px) {
+    .stat-cards-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .stat-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    .dashboard-title {
+        font-size: 24px;
+    }
+}

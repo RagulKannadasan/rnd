@@ -1,0 +1,122 @@
+/* === Analytics Dashboard Final CSS === */
+
+/* --- General Layout & Theme --- */
+.analytics {
+    background-color: #212121; /* Darker, neutral background */
+    color: #e0e0e0;
+    padding: 25px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.analytics-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 30px 0;
+}
+
+/* --- Grid Layout --- */
+.analytics-grid {
+    display: grid;
+    gap: 25px;
+    grid-template-columns: 2fr 1fr; 
+    grid-template-areas:
+        "trends plans"
+        "trends sources";
+}
+
+/* --- Card Styles --- */
+.analytics-card {
+    background-color: #2d2d2d; /* Main card background */
+    border: 1px solid #424242;
+    border-radius: 12px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+}
+
+.analytics-card h3 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+    margin: 0 0 25px 0;
+    letter-spacing: 0.5px;
+}
+
+/* --- Grid Area Assignments --- */
+.analytics-card:nth-child(1) { grid-area: trends; }
+.analytics-card:nth-child(2) { grid-area: plans; }
+.analytics-card:nth-child(3) { grid-area: sources; }
+.analytics-card:has(.growth-metrics) { display: none; }
+
+/* --- 1. Registration Trends Card --- */
+.chart-placeholder { display: flex; flex-direction: column; height: 100%; }
+.bar-chart { display: flex; justify-content: space-around; align-items: flex-end; height: 100%; min-height: 180px; width: 100%; }
+.bar-container { position: relative; display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+.bar { background-color: #F15A24; width: 35px; border-radius: 5px 5px 0 0; position: relative; }
+.bar-value { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background-color: #424242; color: #fff; font-size: 12px; font-weight: 500; padding: 3px 7px; border-radius: 4px; }
+.bar-label { font-size: 13px; color: #a0aec0; margin-top: 10px; }
+.chart-placeholder > p { font-size: 13px; color: #a0aec0; margin-top: auto; padding-top: 20px; }
+
+/* --- 2. Plan Distribution Card --- */
+.plan-stats { display: flex; flex-direction: column; gap: 15px; }
+
+/* Styling for each nested plan item */
+.plan-item {
+    background-color: #212121; /* Darker inset background */
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #424242;
+}
+
+.plan-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.plan-name { font-size: 14px; font-weight: 500; color: #e0e0e0; text-transform: uppercase; }
+.plan-count { font-size: 14px; color: #a0aec0; }
+.progress-bar { background-color: #424242; border-radius: 8px; height: 8px; width: 100%; overflow: hidden; }
+.progress { height: 100%; background-color: #F15A24 !important; /* Force accent color */ border-radius: 8px; }
+.plan-percentage { margin-top: 5px; font-size: 12px; color: #a0aec0; align-self: flex-start; }
+
+/* --- 3. Registration Sources Card --- */
+.registration-sources { display: flex; flex-direction: column; gap: 15px; }
+
+/* Styling for each nested source item */
+.source-item {
+    background-color: #212121; /* Darker inset background */
+    border: 1px solid #424242;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.source-icon { width: 40px; height: 40px; min-width: 40px; border-radius: 50%; background-color: rgba(241, 90, 36, 0.15); display: flex; align-items: center; justify-content: center; font-size: 18px; color: #F15A24; }
+.source-info { flex: 1; width: 100%; }
+.source-info h4 { margin: 0 0 5px 0; font-size: 15px; font-weight: 500; color: #fff; }
+.source-info p { margin: 0; font-size: 13px; color: #a0aec0; }
+
+/* Styling for the source progress bar */
+.source-bar {
+    background-color: #424242; /* Background for the unfilled part */
+    height: 4px;
+    width: 100%;
+    border-radius: 2px;
+    margin-top: 8px;
+}
+
+.source-progress {
+    height: 100%;
+    background-color: #F15A24; /* Filled part */
+    border-radius: 2px;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 992px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "trends"
+            "plans"
+            "sources";
+    }
+}

@@ -1,0 +1,83 @@
+{
+  "name": "fitclub",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emailjs/nodejs": "^4.0.1",
+    "@testing-library/react": "^13.3.0",
+    "@testing-library/user-event": "^13.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "firebase": "^11.10.0",
+    "firebase-admin": "^11.10.1",
+    "framer-motion": "^10.0.1",
+    "html5-qrcode": "^2.3.8",
+    "jspdf": "^3.0.3",
+    "jsqr": "^1.4.0",
+    "motion": "^10.15.5",
+    "number-counter": "^1.0.3",
+    "qrcode.react": "^4.2.0",
+    "razorpay": "^2.9.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.5.0",
+    "react-onclickoutside": "^6.12.2",
+    "react-pwa": "^0.0.1",
+    "react-router-dom": "^6.25.1",
+    "react-scripts": "^5.0.1",
+    "react-scroll": "^1.8.7",
+    "tslib": "^2.8.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "build:netlify": "react-scripts build",
+    "build:analyze": "react-scripts build && npx serve -s build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "server": "node scripts/server.js",
+    "test-server": "node scripts/test-server-access.js",
+    "ngrok": "npx ngrok http 3000",
+    "ngrok:server": "npx ngrok http 5001",
+    "ngrok:both": "concurrently \"npm start\" \"npx ngrok http 3000\" \"npx ngrok http 5001\"",
+    "local-ip": "node scripts/get-local-ip.js",
+    "netlify": "netlify",
+    "netlify:SignIn": "netlify SignIn",
+    "netlify:deploy": "netlify deploy",
+    "netlify:deploy:prod": "netlify deploy --prod",
+    "init-community-data": "node scripts/initCommunityData.js",
+    "fix-community-posts": "node scripts/fixCommunityPosts.js",
+    "update-stats": "node scripts/updateUserStats.js",
+    "update-stats-all": "node scripts/updateUserStats.js --all",
+    "update-stats-recent": "node scripts/updateUserStats.js --recent",
+    "reset-bookings": "node scripts/reset-bookings.js"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "cypress": "^15.2.0",
+    "netlify": "^13.1.2",
+    "netlify-cli": "^23.5.1"
+  }
+}

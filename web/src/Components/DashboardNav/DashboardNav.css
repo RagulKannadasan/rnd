@@ -1,0 +1,602 @@
+.dashboard-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 70px;
+  background: #232324; /* Dark background as per user preference */
+  border-bottom: 1px solid #444; /* Border color as per user preference */
+  z-index: 1000;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px); /* Adding blur effect for modern look */
+}
+
+.nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-logo img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.nav-logo span {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #F15A24; /* Orange color from App.css */
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  color: #fff; /* Light text as per user preference */
+  border: 1px solid #444; /* Border color as per user preference */
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  background: rgba(241, 90, 36, 0.1); /* Light orange background on hover */
+  border-color: #F15A24; /* Orange border on hover as per user preference */
+  transform: translateY(-2px);
+}
+
+.nav-link.active {
+  background: #F15A24; /* Orange background for active state */
+  color: #fff; /* White text for active state */
+  border-color: #F15A24; /* Orange border for active state */
+}
+
+.nav-link svg {
+  font-size: 1.1rem;
+  min-width: 16px;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.profile-icon {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-image-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #444; /* Dark background as per user preference */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff; /* Light text as per user preference */
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  border: 1px solid #444; /* Border as per user preference */
+}
+
+.profile-image-placeholder:hover {
+  background: #F15A24; /* Orange background on hover as per user preference */
+  border-color: #F15A24; /* Orange border on hover */
+  transform: scale(1.05);
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: rgba(35, 35, 36, 0.95); /* Dark background with slight transparency */
+  backdrop-filter: blur(10px); /* Adding blur effect for modern look */
+  border: 1px solid #444; /* Border color as per user preference */
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  width: 200px;
+  margin-top: 10px;
+  z-index: 1001;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: transparent;
+  border: none;
+  color: #fff; /* Light text as per user preference */
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.dropdown-item:hover {
+  background: rgba(241, 90, 36, 0.1); /* Light orange background on hover */
+}
+
+.dropdown-item svg {
+  font-size: 1rem;
+  min-width: 16px;
+}
+
+.logout-item {
+  color: #e74c3c;
+  border-top: 1px solid #444; /* Border color as per user preference */
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+}
+
+.logout-item:hover {
+  background: rgba(231, 76, 60, 0.1); /* Light red background on hover */
+}
+
+/* Logout Confirmation Modal Styles */
+.logout-confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logout-confirmation-modal {
+  background: linear-gradient(135deg, #3c3f45 0%, #232324 100%);
+  border: 1px solid rgba(241, 90, 36, 0.5);
+  border-radius: 15px;
+  padding: 2rem;
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.3s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  margin: auto; /* Ensures perfect centering */
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-icon-large {
+  font-size: 2.5rem;
+  color: #F15A24;
+  margin-bottom: 1rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    text-shadow: 0 0 0 rgba(241, 90, 36, 0.5);
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+    text-shadow: 0 0 10px rgba(241, 90, 36, 0.8);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    text-shadow: 0 0 0 rgba(241, 90, 36, 0.5);
+  }
+}
+
+.logout-confirmation-modal h3 {
+  color: #F15A24;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.logout-confirmation-modal p {
+  color: #fff;
+  margin-bottom: 2rem;
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirm-btn, .cancel-btn {
+  padding: 0.9rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.confirm-btn {
+  background: #F15A24;
+  color: white;
+  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.3);
+}
+
+.confirm-btn:hover {
+  background: #e04d1f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(241, 90, 36, 0.4);
+}
+
+.cancel-btn {
+  background: transparent;
+  color: #fff;
+  border: 2px solid #444;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  border-color: #F15A24;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .nav-content {
+    padding: 0 1rem;
+  }
+  
+  .nav-logo span {
+    display: none;
+  }
+  
+  .nav-links {
+    gap: 0.5rem;
+  }
+  
+  .nav-link {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border: 1px solid #444; /* Border color as per user preference */
+  }
+  
+  .nav-link span {
+    display: none;
+  }
+  
+  .profile-dropdown {
+    right: -50px;
+  }
+  
+  .nav-logo img {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .profile-image-placeholder {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+  
+  .logout-confirmation-modal {
+    padding: 1.5rem;
+    max-width: 350px;
+  }
+  
+  .logout-confirmation-modal h3 {
+    font-size: 1.5rem;
+  }
+  
+  .logout-confirmation-modal p {
+    font-size: 1.1rem;
+  }
+  
+  .confirmation-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .confirm-btn, .cancel-btn {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-nav {
+    height: 60px;
+  }
+  
+  .nav-links {
+    gap: 0.25rem;
+  }
+  
+  .nav-link {
+    padding: 0.5rem;
+    border: 1px solid #444; /* Border color as per user preference */
+    border-radius: 20px;
+  }
+  
+  .profile-dropdown {
+    width: 180px;
+    right: -70px;
+  }
+  
+  .dropdown-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .nav-content {
+    padding: 0 0.75rem;
+  }
+  
+  .nav-logo img {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .profile-image-placeholder {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+  }
+  
+  .logout-confirmation-modal {
+    padding: 1.25rem;
+    max-width: 300px;
+  }
+  
+  .logout-confirmation-modal h3 {
+    font-size: 1.3rem;
+  }
+  
+  .logout-confirmation-modal p {
+    font-size: 1rem;
+  }
+  
+  .confirm-btn, .cancel-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+  }
+}
+
+/* Animation Classes */
+.nav-link {
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  transform: translateY(-2px);
+}
+
+.profile-image-placeholder {
+  transition: all 0.3s ease;
+}
+
+.profile-image-placeholder:hover {
+  transform: scale(1.05);
+}
+
+/* Notification Overlay */
+.notification-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.custom-notification {
+  background: linear-gradient(135deg, #3c3f45 0%, #232324 100%);
+  border: 1px solid #F15A24;
+  border-radius: 15px;
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(241, 90, 36, 0.4);
+  animation: slideUp 0.3s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  margin: auto;
+}
+
+.custom-notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 0;
+}
+
+.notification-icon {
+  font-size: 2rem;
+  color: #F15A24;
+  animation: pulse 2s infinite;
+}
+
+.notification-close-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.notification-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-notification-content {
+  padding: 1.5rem;
+}
+
+.notification-message {
+  color: #F15A24;
+  margin-bottom: 2rem;
+  font-size: 1.2rem;
+  line-height: 1.5;
+  font-weight: bold;
+}
+
+.notification-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirm-btn, .cancel-btn {
+  padding: 0.9rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.confirm-btn {
+  background: #F15A24;
+  color: white;
+  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.5);
+}
+
+.confirm-btn:hover {
+  background: #e04d1f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(241, 90, 36, 0.7);
+}
+
+.cancel-btn {
+  background: transparent;
+  color: #fff;
+  border: 2px solid #444;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  border-color: #F15A24;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .free-trial-notification {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+  
+  .free-trial-actions {
+    flex-direction: column;
+  }
+  
+  .free-trial-btn {
+    width: 100%;
+  }
+  
+  .notification-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 80%;
+  }
+  
+  .confirm-btn, .cancel-btn {
+    min-width: auto;
+    width: 100%;
+  }
+}

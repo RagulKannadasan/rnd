@@ -1,0 +1,131 @@
+.payments {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+.payments h2 {
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.status-filter {
+  padding: 8px 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #1e1e1e;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.payments-table th,
+.payments-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.payments-table th {
+  background-color: #2d2d2d;
+  font-weight: 600;
+  color: #ffffff;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.payments-table tr:hover {
+  background-color: #2a2a2a;
+}
+
+.payments-table td {
+  font-size: 14px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* Changed confirmed status to use orange accent color instead of green */
+.status-confirmed {
+  background-color: #F15A24; /* Orange accent color */
+  color: #ffffff;
+}
+
+.status-pending {
+  background-color: #ff8f00;
+  color: #ffffff;
+}
+
+.status-failed {
+  background-color: #c62828;
+  color: #ffffff;
+}
+
+.status-unknown {
+  background-color: #424242;
+  color: #ffffff;
+}
+
+.revenue-summary {
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #333;
+}
+
+.revenue-summary h3 {
+  margin-top: 0;
+  color: #ffffff;
+}
+
+.revenue-summary p {
+  margin: 8px 0;
+  font-size: 16px;
+  color: #e0e0e0;
+}
+
+@media (max-width: 768px) {
+  .payments {
+    padding: 10px;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+  }
+  
+  .payments-table {
+    font-size: 12px;
+  }
+  
+  .payments-table th,
+  .payments-table td {
+    padding: 8px 10px;
+  }
+}

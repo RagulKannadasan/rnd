@@ -1,0 +1,675 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../../firebase';
+import firebaseService from '../../services/firebaseService';
+import { formatDate } from '../../utils/dateUtils';
+import DashboardNav from '../DashboardNav/DashboardNav';
+import './UserEventsPage.css';
+
+function UserEventsPage() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [userBookings, setUserBookings] = useState([]);
+  const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' or 'past'
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(Date.now()); // Add refresh tracking
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.exists() ? userDoc.data() : {};
+      
+        const userObject = {
+          uid: currentUser.uid,
+          name: currentUser.displayName || userData.displayName || 'User',
+          email: currentUser.email || userData.email,
+          phoneNumber: currentUser.phoneNumber || userData.phoneNumber || '',
+        };
+        
+        setUser(userObject);
+        await fetchUserBookings(currentUser.uid);
+      } else {
+        setUser(null);
+        setUserBookings([]);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user && user.uid) {
+      fetchUserBookings(user.uid);
+    }
+  }, [user, lastRefresh]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [lastRefresh]); // Add lastRefresh as dependency
+
+  // Check for refresh flag
+  useEffect(() => {
+    const checkForRefresh = () => {
+      let shouldTriggerRefresh = false;
+      
+      // Check for refresh flag
+      const shouldRefresh = localStorage.getItem('refreshBookings');
+      if (shouldRefresh === 'true') {
+        // Clear the refresh flag
+        localStorage.removeItem('refreshBookings');
+        shouldTriggerRefresh = true;
+      }
+      
+      // Check for new booking flag (set after successful payment)
+      const newBooking = localStorage.getItem('newBooking');
+      if (newBooking) {
+        // Clear the new booking flag
+        localStorage.removeItem('newBooking');
+        shouldTriggerRefresh = true;
+      }
+      
+      // Check for event updates flag (set when events are updated in admin)
+      const eventsUpdated = localStorage.getItem('eventsUpdated');
+      if (eventsUpdated === 'true') {
+        // Clear the events updated flag
+        localStorage.removeItem('eventsUpdated');
+        shouldTriggerRefresh = true;
+      }
+      
+      // Check for latest event booking (new approach)
+      const latestEventBooking = localStorage.getItem('latestEventBooking');
+      if (latestEventBooking) {
+        // Clear the latest event booking flag
+        localStorage.removeItem('latestEventBooking');
+        shouldTriggerRefresh = true;
+      }
+      
+      // Check if 24 hours have passed since last booking and trigger refresh if so
+      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      if (localBookings.length > 0) {
+        // Get current time
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
+        
+        // Check if all bookings are older than 24 hours
+        const allBookingsOlder = localBookings.every(booking => {
+          // Skip free trial bookings
+          if (booking.mode === 'free_trial') {
+            return true;
+          }
+          
+          const bookingDate = booking.bookingDate || booking.createdAt;
+          if (bookingDate) {
+            let bookingTime;
+            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+              bookingTime = bookingDate.toDate();
+            } else if (bookingDate instanceof Date) {
+              bookingTime = bookingDate;
+            } else {
+              bookingTime = new Date(bookingDate);
+            }
+            
+            return bookingTime < twentyFourHoursAgo;
+          }
+          
+          return true;
+        });
+        
+        // If all bookings are older than 24 hours, trigger refresh
+        if (allBookingsOlder) {
+          shouldTriggerRefresh = true;
+        }
+      }
+      
+      // Only trigger refresh if needed
+      if (shouldTriggerRefresh) {
+        setLastRefresh(Date.now());
+      }
+    };
+
+    // Check immediately when component mounts
+    checkForRefresh();
+
+    // Check less frequently (every 5 seconds) to reduce performance impact
+    const interval = setInterval(checkForRefresh, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Add auto-refresh when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible, refresh bookings
+        if (user && user.uid) {
+          setLastRefresh(Date.now());
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const [upcoming, past] = await Promise.all([
+        firebaseService.getUpcomingEvents(),
+        firebaseService.getPastEvents()
+      ]);
+      console.log('fetchEvents -> upcoming:', upcoming);
+      console.log('fetchEvents -> past:', past);
+      
+      // Filter to show only ONE "Weekly Community Run" event and ensure proper ID handling
+      const getEventName = (e) => (e.name || e.title || '').toString();
+
+      const weeklyCommunityRun = upcoming.filter(event => 
+        getEventName(event).toLowerCase().includes('weekly community run')
+      ).map(event => ({
+        ...event,
+        id: String(event.id), // Ensure ID is a string for consistent comparison
+        image: event.image || event.imageUrl || event.imageURL || event.imagePath || event.image_path
+      }));
+      
+      // Use only the first event if there are multiple instances
+      const filteredUpcomingEvents = weeklyCommunityRun.length > 0 ? [weeklyCommunityRun[0]] : [];
+      
+      // Filter past events to show only "Weekly Community Run" events
+      const pastWeeklyCommunityRun = past.filter(event => 
+        getEventName(event).toLowerCase().includes('weekly community run')
+      ).map(event => ({
+        ...event,
+        id: String(event.id), // Ensure ID is a string for consistent comparison
+        image: event.image || event.imageUrl || event.imageURL || event.imagePath || event.image_path
+      }));
+
+      console.log('pastWeeklyCommunityRun (filtered):', pastWeeklyCommunityRun);
+      
+      setUpcomingEvents(filteredUpcomingEvents);
+
+      if (pastWeeklyCommunityRun.length > 0) {
+        setPastEvents([pastWeeklyCommunityRun[0]]);
+        console.log('Using filtered past weekly event:', pastWeeklyCommunityRun[0]);
+      } else if (past && past.length > 0) {
+        // Fallback: if no past weekly community run found, show all past events (mapped)
+        const mappedPast = past.map(event => ({
+          ...event,
+          id: String(event.id),
+          image: event.image || event.imageUrl || event.imageURL || event.imagePath || event.image_path,
+          title: event.title || event.name
+        }));
+        setPastEvents(mappedPast);
+        console.log('No filtered weekly past event found — falling back to all past events:', mappedPast);
+      } else {
+        setPastEvents([]);
+        console.log('No past events returned from service');
+      }
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setError('Failed to load events. Please try again later.');
+      
+      // Use placeholder data in case of error
+      setUpcomingEvents([
+        {
+          id: '1',
+          name: 'Weekly Community Run',
+          date: '2025-10-25T07:00:00',
+          time: '07:00 AM',
+          location: 'C3 Cafe, City Park',
+          description: 'Join fellow runners for an unforgettable experience.',
+          image: '/upcoming-events.jpeg',
+          status: 'Open for Registration',
+          participants: 25,
+          maxParticipants: 50,
+        }
+      ]);
+      
+      setPastEvents([
+        {
+          id: '101',
+          name: 'Weekly Community Run',
+          date: '2025-09-15T07:00:00',
+          time: '07:00 AM',
+          location: 'City Stadium',
+          description: 'A fun-filled sprint event to kickstart the summer.',
+          image: '/summer-sprint.jpg',
+          participants: 120,
+          maxParticipants: 150,
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserBookings = async (userId) => {
+    try {
+      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      if (localBookings.length > 0) {
+        setUserBookings(localBookings);
+      }
+      
+      const bookingsRef = collection(db, 'bookings');
+      const q = query(bookingsRef, where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      const bookings = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      setUserBookings(bookings);
+      localStorage.setItem('eventBookings', JSON.stringify(bookings));
+      console.log('Fetched user bookings:', bookings);
+    } catch (error) {
+      console.error('Error fetching user bookings:', error);
+      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      setUserBookings(localBookings);
+      console.log('Using cached user bookings:', localBookings);
+    }
+  };
+
+  // Function to check if bookings are closed for an event
+  const isBookingClosed = (event) => {
+    // If event has bookingStatus as 'closed' and bookingCloseTime is set
+    if (event.bookingStatus === 'closed' && event.bookingCloseTime) {
+      // Convert bookingCloseTime to Date object
+      let closeTime;
+      if (event.bookingCloseTime.toDate && typeof event.bookingCloseTime.toDate === 'function') {
+        closeTime = event.bookingCloseTime.toDate();
+      } else if (event.bookingCloseTime instanceof Date) {
+        closeTime = event.bookingCloseTime;
+      } else {
+        closeTime = new Date(event.bookingCloseTime);
+      }
+      
+      // Compare with current time
+      const now = new Date();
+      return now >= closeTime;
+    }
+    
+    return false;
+  };
+
+  // Function to check if user booked a monthly subscription within the last 30 days
+  const hasUserBookedMonthlyWithinThirtyDays = () => {
+    if (!userBookings || userBookings.length === 0) {
+      return false;
+    }
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days ago
+    
+    // Check if any booking was made within the last 30 days for Monthly Membership
+    return userBookings.some(booking => {
+      // Check if booking is for Monthly Membership
+      if (booking.eventName !== 'Monthly Membership') {
+        return false;
+      }
+      
+      // Skip free trial bookings
+      if (booking.mode === 'free_trial') {
+        return false;
+      }
+      
+      // Now check if the booking was made within the last 30 days
+      const bookingCreationDate = booking.bookingDate || booking.createdAt;
+      if (bookingCreationDate) {
+        let bookingTime;
+        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+          bookingTime = bookingCreationDate.toDate();
+        } else if (bookingCreationDate instanceof Date) {
+          bookingTime = bookingCreationDate;
+        } else {
+          bookingTime = new Date(bookingCreationDate);
+        }
+        
+        return bookingTime >= thirtyDaysAgo && bookingTime <= now;
+      }
+      
+      return false;
+    });
+  };
+
+  // New function to check if user booked today (regardless of event)
+  const hasUserBookedToday = (eventId, eventDate) => {
+    if (!userBookings || userBookings.length === 0) {
+      return false;
+    }
+
+    const targetEventId = String(eventId);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Check if any booking was made today
+    return userBookings.some(booking => {
+      // First check if the booking is for the target event
+      let isTargetEvent = false;
+      
+      // Check multiple possible field names
+      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
+      if (bookingEventId) {
+        isTargetEvent = String(bookingEventId) === targetEventId;
+      }
+      
+      // If this booking is not for the target event, skip it
+      if (!isTargetEvent) {
+        return false;
+      }
+      
+      // If eventDate is provided, also check if the booking is for the same date
+      if (eventDate) {
+        const bookingEventDate = booking.eventDate;
+        if (bookingEventDate) {
+          let bookingDate;
+          if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
+            bookingDate = bookingEventDate.toDate();
+          } else if (bookingEventDate instanceof Date) {
+            bookingDate = bookingEventDate;
+          } else {
+            bookingDate = new Date(bookingEventDate);
+          }
+          
+          // Compare dates
+          const eventDateObj = new Date(eventDate);
+          if (bookingDate.toDateString() !== eventDateObj.toDateString()) {
+            // Different date, so not the same event instance
+            return false;
+          }
+        }
+      }
+      
+      // Now check if the booking was made today
+      const bookingCreationDate = booking.bookingDate || booking.createdAt;
+      if (bookingCreationDate) {
+        let bookingTime;
+        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+          bookingTime = bookingCreationDate.toDate();
+        } else if (bookingCreationDate instanceof Date) {
+          bookingTime = bookingCreationDate;
+        } else {
+          bookingTime = new Date(bookingCreationDate);
+        }
+        
+        bookingTime.setHours(0, 0, 0, 0);
+        
+        return bookingTime.getTime() === today.getTime();
+      }
+      
+      return false;
+    });
+  };
+
+  // Function to check for today's bookings from localStorage (immediate feedback after payment)
+  const checkTodaysBookingFromStorage = (eventId) => {
+    const latestBooking = localStorage.getItem('latestBooking');
+    if (latestBooking) {
+      try {
+        const booking = JSON.parse(latestBooking);
+        const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
+        const targetEventId = String(eventId);
+        
+        if (String(bookingEventId) === targetEventId) {
+          // Check if this booking was made today
+          const bookingDate = booking.bookingDate || booking.createdAt || booking.timestamp;
+          if (bookingDate) {
+            let bookingTime;
+            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+              bookingTime = bookingDate.toDate();
+            } else if (bookingDate instanceof Date) {
+              bookingTime = bookingDate;
+            } else if (typeof bookingDate === 'string' || typeof bookingDate === 'number') {
+              bookingTime = new Date(bookingDate);
+            } else {
+              bookingTime = new Date(bookingDate);
+            }
+            
+            if (!isNaN(bookingTime.getTime())) {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              bookingTime.setHours(0, 0, 0, 0);
+              
+              return bookingTime.getTime() === today.getTime();
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing latest booking from localStorage:', e);
+      }
+    }
+    return false;
+  };
+
+  const handleRegister = async (event) => {
+    if (!user) {
+      navigate('/signup');
+      return;
+    }
+
+    if (!user.phoneNumber) {
+      alert('To book a free trial, please update your profile with a phone number.');
+      navigate('/profile');
+      return;
+    }
+
+    // Check if bookings are closed
+    if (isBookingClosed(event)) {
+      alert('Bookings for this event are currently closed.');
+      return;
+    }
+
+    // Pass the event information to the plans page
+    // We'll store the event in localStorage so the plans page can access it
+    localStorage.setItem('selectedEvent', JSON.stringify(event));
+    
+    // Instead of checking eligibility and navigating to payments, 
+    // we'll navigate directly to the plans page
+    navigate('/plans');
+    
+    // Note: The original functionality for checking free trial eligibility
+    // and navigating to payments has been removed as per the user's request
+    // to navigate directly to the plans page
+  };
+
+  // Calculate progress percentage
+  const getProgressPercentage = (participants, maxParticipants) => {
+    return Math.min(100, (participants / maxParticipants) * 100);
+  };
+
+  if (loading) {
+    return (
+      <div className="events-page">
+        <div className="events-container">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Loading events...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="events-page">
+        <div className="events-container">
+          <div className="error-container">
+            <p>{error}</p>
+            <button onClick={fetchEvents} className="retry-btn">Retry</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="events-page">
+      <DashboardNav />
+      <div className="events-container">
+        <div className="events-header">
+          <h1>Weekly Community Run</h1>
+          <p>Join our community runs and be part of something amazing!</p>
+          {/* Add refresh button with clean styling */}
+        </div>
+
+        {/* Section Header (New) */}
+        <div className="section-header">
+          <h2>Your Events</h2>
+          <p>Manage your upcoming and past event bookings</p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="events-tabs">
+          <button 
+            className={`tab-btn ${activeTab === 'upcoming' ? 'active' : ''}`}
+            onClick={() => setActiveTab('upcoming')}
+          >
+            Upcoming Events
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'past' ? 'active' : ''}`}
+            onClick={() => setActiveTab('past')}
+          >
+            Past Events
+          </button>
+        </div>
+
+        {/* Events Content */}
+        <div className="events-content">
+          {activeTab === 'upcoming' ? (
+            <div className="events-grid">
+              {upcomingEvents.length > 0 ? (
+                upcomingEvents.map(event => (
+                  <div key={event.id} className="event-card">
+                    <div className="event-image-container">
+                      <img 
+                        src={event.image || '/upcoming-events.jpeg'} 
+                        alt={event.title || event.name} 
+                        onError={(e) => {
+                          e.target.src = '/upcoming-events.jpeg';
+                        }}
+                      />
+                      <div className="event-status-badge">
+                        {isBookingClosed(event) ? 'Bookings Closed' : (event.status || 'Open')}
+                      </div>
+                    </div>
+                    
+                    <div className="event-details">
+                      <h3 className="event-title">{event.title || event.name}</h3>
+                      
+                      <div className="event-meta">
+                        <div className="event-date">
+                          <span className="icon">📅</span>
+                          {formatDate(event.date)}
+                        </div>
+                        <div className="event-time">
+                          <span className="icon">⏰</span>
+                          {event.time || 'TBD'}
+                        </div>
+                        <div className="event-location">
+                          <span className="icon">📍</span>
+                          {event.location}
+                        </div>
+                      </div>
+                      
+                      <p className="event-description">{event.description}</p>
+                      
+                      <div className="event-stats">
+                        <div className="participants-info">
+                          <div className="progress-container">
+                            <div 
+                              className="progress-fill" 
+                              style={{ width: `${getProgressPercentage(event.participants || 0, event.maxParticipants || 100)}%` }}
+                            ></div>
+                          </div>
+                          <div className="progress-text">
+                            {event.participants || 0} of {event.maxParticipants || 100} spots filled
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="event-actions">
+                        <button 
+                          className="register-btn"
+                          onClick={() => handleRegister(event)}
+                          disabled={checkTodaysBookingFromStorage(event.id) || 
+                                   isBookingClosed(event) ||
+                                   hasUserBookedToday(event.id, event.date)}
+                        >
+                          {isBookingClosed(event) ? 'Bookings Closed' :
+                           checkTodaysBookingFromStorage(event.id) ? 'Already Booked' : 
+                           hasUserBookedToday(event.id, event.date) ? 
+                             (hasUserBookedMonthlyWithinThirtyDays() ? 'Booked for a month' : 'Already Booked') :
+                           'Book Your Slot'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-events">
+                  <p>No upcoming Weekly Community Run events at the moment. Check back soon!</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="events-grid">
+              {pastEvents.length > 0 ? (
+                pastEvents.map(event => (
+                  <div key={event.id} className="event-card past-event">
+                    <div className="event-image-container">
+                      <img 
+                        src={event.image || '/upcoming-events.jpeg'} 
+                        alt={event.title} 
+                        onError={(e) => {
+                          e.target.src = '/upcoming-events.jpeg';
+                        }}
+                      />
+                      <div className="event-status-badge past">Completed</div>
+                    </div>
+                    
+                    <div className="event-details">
+                      <h3 className="event-title">{event.title}</h3>
+                      
+                      <div className="event-meta">
+                        <div className="event-date">
+                          <span className="icon">📅</span>
+                          {formatDate(event.date)}
+                        </div>
+                        <div className="event-time">
+                          <span className="icon">⏰</span>
+                          {event.time || 'TBD'}
+                        </div>
+                        <div className="event-location">
+                          <span className="icon">📍</span>
+                          {event.location}
+                        </div>
+                      </div>
+                      
+                      <p className="event-description">{event.description}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-events">
+                  <p>No past Weekly Community Run events available.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default UserEventsPage;

@@ -1,0 +1,834 @@
+:root {
+  --appColor: #1e1e1e;
+  --darkGrey: #2a2a2a;
+  --orange: #f15a24;
+  --lightText: #e0e0e0;
+  --mediumText: #aaa;
+  --lightBorder: #333;
+  --darkBorder: #444;
+}
+
+.dashboard {
+  min-height: 100vh;
+  background-color: var(--appColor);
+  color: var(--lightText);
+}
+
+.dashboard-main {
+  padding-top: 70px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--darkGrey);
+  border-bottom: 1px solid var(--lightBorder);
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--lightBorder);
+  border-radius: 25px;
+}
+
+.user-icon {
+  color: var(--orange);
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #d14a1f;
+  transform: translateY(-2px);
+}
+
+.dashboard-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.dashboard-leaderboard {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.upgrade-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.upgrade-btn:hover {
+  background: #d14a1f;
+  transform: translateY(-2px);
+}
+
+/* Profile Card */
+.profile-card {
+  background: var(--darkGrey);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 2px solid var(--orange);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 20px rgba(241, 90, 36, 0.3);
+  animation: pulse-border 2s infinite;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-avatar {
+  width: 60px;
+  height: 60px;
+  background: var(--orange);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-info h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.3rem;
+  color: white;
+}
+
+.user-level {
+  color: var(--orange);
+  font-weight: bold;
+  margin: 0 0 0.1rem 0;
+  font-size: 0.9rem;
+}
+
+.member-since {
+  color: var(--mediumText);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.profile-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 0.75rem;
+  background: var(--lightBorder);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--orange);
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--mediumText);
+}
+
+/* Stats Card */
+.stats-card {
+  background: var(--darkGrey);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 2px solid var(--orange);
+  box-shadow: 0 0 20px rgba(241, 90, 36, 0.3);
+  animation: pulse-border 2s infinite;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.card-header h3 {
+  margin: 0;
+  flex-grow: 1;
+  font-size: 1.1rem;
+}
+
+.ticket-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.refresh-btn {
+  background: var(--lightBorder);
+  border: 1px solid var(--darkBorder);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+  transform: rotate(180deg);
+  background-color: rgba(241, 90, 36, 0.2);
+}
+
+.view-tickets-btn {
+  padding: 0.25rem 0.75rem;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.view-tickets-btn:hover {
+  background: #d14a1f;
+  transform: translateY(-2px);
+}
+
+.stats-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.stat-period {
+  background: var(--lightBorder);
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+.stat-period h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--orange);
+  font-size: 1rem;
+}
+
+.stat-details p {
+  margin: 0.25rem 0;
+  color: var(--mediumText);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Events & Tickets Card */
+.events-card {
+  background: var(--darkGrey);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 2px solid var(--orange);
+  box-shadow: 0 0 20px rgba(241, 90, 36, 0.3);
+  animation: pulse-border 2s infinite;
+}
+
+/* Plan section within the recent event card */
+.plan-section {
+  border-top: 1px solid var(--lightBorder);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.plan-section .card-header {
+  padding: 0.25rem 0;
+}
+
+.plan-section h4 {
+  color: var(--orange);
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+
+.plan-section p {
+  color: var(--mediumText);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Special styling for the My Tickets card to make it more visible */
+.events-card.tickets-card {
+  border: 2px solid var(--orange);
+  box-shadow: 0 0 20px rgba(241, 90, 36, 0.3);
+  animation: pulse-border 2s infinite;
+}
+
+/* Ensure the tickets card itself can expand to show all content */
+.events-card.tickets-card {
+  height: auto;
+  min-height: auto;
+}
+
+/* Ensure tickets card shows full content without internal scrolling */
+.events-card.tickets-card .events-list {
+  max-height: none;
+  overflow: visible;
+  /* Reduce padding to make card more compact */
+  padding: 0.5rem 0;
+}
+
+/* Improve ticket item styling for better appearance */
+.ticket-item-container {
+  background: var(--lightBorder);
+  border-radius: 6px;
+  border: 1px solid rgba(241, 90, 36, 0.3);
+  transition: all 0.2s ease;
+  margin-bottom: 0.4rem;
+  padding: 0.5rem;
+  min-height: auto;
+}
+
+.ticket-item-container:hover {
+  background: var(--lightBorder);
+  border-color: var(--orange);
+  transform: translateY(-1px);
+}
+
+.ticket-item-container h4 {
+  margin: 0 0 0.2rem 0;
+  font-size: 0.9rem;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket-item-container .event-details {
+  color: var(--mediumText);
+  font-size: 0.75rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.booking-id-preview {
+  color: #aaa;
+  font-size: 0.65rem;
+  margin: 0.05rem 0 0 0;
+}
+
+/* Compact view ticket button with proper spacing */
+.view-ticket-btn {
+  padding: 0.15rem 0.3rem;
+  background: rgba(241, 90, 36, 0.2);
+  color: var(--orange);
+  border: 1px solid var(--orange);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.6rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: auto;
+  flex-shrink: 0;
+  font-weight: 500;
+  margin-left: 0.4rem;
+}
+
+.view-ticket-btn:hover {
+  background: var(--orange);
+  color: white;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(241, 90, 36, 0.3);
+}
+
+/* Ensure the ticket list container has proper spacing */
+.events-card.tickets-card .events-list {
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+/* Mobile responsive styles for compact tickets */
+@media (max-width: 768px) {
+  .ticket-item-container {
+    padding: 0.6rem;
+  }
+  
+  .ticket-item-container h4 {
+    font-size: 0.9rem;
+  }
+  
+  .ticket-item-container .event-details {
+    font-size: 0.75rem;
+  }
+  
+  .booking-id-preview {
+    font-size: 0.65rem;
+  }
+  
+  .view-ticket-btn {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.6rem;
+    border-radius: 6px;
+    margin-left: 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ticket-item-container {
+    padding: 0.5rem;
+  }
+  
+  .ticket-item-container h4 {
+    font-size: 0.85rem;
+  }
+  
+  .ticket-item-container .event-details {
+    font-size: 0.7rem;
+  }
+  
+  .booking-id-preview {
+    font-size: 0.6rem;
+  }
+  
+  .view-ticket-btn {
+    padding: 0.1rem 0.3rem;
+    font-size: 0.55rem;
+    border-radius: 5px;
+    margin-left: 0.3rem;
+  }
+  
+  /* Adjust modal for small screens */
+  .full-screen-ticket-content {
+    padding: 1rem !important;
+    margin: 0.5rem !important;
+  }
+  
+  .full-screen-ticket-header h2 {
+    font-size: 1.4rem;
+  }
+  
+  /* Make QR code smaller on very small screens */
+  .ticket-qr-section canvas {
+    width: 150px !important;
+    height: 150px !important;
+  }
+}
+
+/* Plans Section in Dashboard */
+.plans-section {
+  background: var(--lightBorder);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid var(--lightBorder);
+  margin-top: 2rem;
+  grid-column: 1 / -1;
+  overflow: visible; /* Prevent cards from being cut off */
+  margin-bottom: 3rem; /* Add bottom margin to ensure space for hover effects */
+}
+
+.plans-section .card-header {
+  margin-bottom: 2rem;
+}
+
+/* Ensure the plans grid fits well in the dashboard */
+.plans-content-wrapper {
+  width: 100%;
+  overflow: visible; /* Prevent content from being cut off */
+  padding: 10px 0; /* Add padding to prevent cards from touching edges */
+}
+
+.plans-content-wrapper > div {
+  /* Remove padding that might be causing issues */
+  padding: 0 !important;
+  background: transparent !important;
+  overflow: visible; /* Prevent content from being cut off */
+}
+
+/* Ensure the plans grid fits well in the dashboard */
+.plans-content-wrapper .plans-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 1.5rem !important;
+  margin: 0 !important;
+  width: 100%;
+  overflow: visible; /* Prevent content from being cut off */
+  padding: 20px 0; /* Add padding to prevent cards from touching edges */
+}
+
+/* Adjust plan cards for dashboard context */
+.plans-content-wrapper .plan-card {
+  background: var(--lightBorder) !important;
+  border: 1px solid var(--lightBorder) !important;
+  backdrop-filter: blur(5px) !important;
+  min-height: 450px !important; /* Increase minimum height */
+  height: auto;
+  overflow: visible; /* Prevent content from being cut off */
+  z-index: 10; /* Ensure cards are above other elements */
+  position: relative; /* Ensure z-index works */
+  margin: 20px 0; /* Add margin to prevent cards from touching edges */
+}
+
+.plans-content-wrapper .plan-card.popular {
+  border: 1px solid var(--orange) !important;
+  box-shadow: 0 0 15px rgba(241, 90, 36, 0.2) !important;
+  z-index: 20; /* Popular cards should be above regular cards */
+  margin: 25px 0; /* Increase margin for popular cards */
+}
+
+/* Hide background elements when in dashboard */
+.plans-content-wrapper .plans-background {
+  display: none !important;
+}
+
+/* Adjust the payment modal to work within dashboard context */
+.payment-modal-overlay {
+  z-index: 2000 !important;
+}
+
+.payment-modal {
+  z-index: 2001 !important;
+}
+
+/* Responsive adjustments for plans in dashboard */
+@media (max-width: 768px) {
+  .plans-content-wrapper .plans-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .plans-section {
+    padding: 1rem;
+  }
+  
+  .plans-content-wrapper .plan-card {
+    min-height: 400px !important; /* Slightly smaller on mobile */
+    margin: 15px 0; /* Adjust margin for mobile */
+  }
+  
+  .plans-content-wrapper .plan-card.popular {
+    margin: 20px 0; /* Adjust margin for popular cards on mobile */
+  }
+}
+
+/* Ensure plan cards don't have excessive height in dashboard */
+.plans-content-wrapper .plan-card {
+  height: auto;
+  min-height: 450px;
+}
+
+/* Adjust popular plan scaling in dashboard */
+.plans-content-wrapper .plan-card.popular {
+  transform: scale(1.02) !important;
+}
+
+.plans-content-wrapper .plan-card.popular:hover {
+  transform: translateY(-5px) scale(1.03) !important;
+}
+
+/* Adjust header when in dashboard */
+.plans-content-wrapper .plans-header {
+  text-align: left !important;
+  margin-bottom: 2rem !important;
+}
+
+.plans-content-wrapper .main-title {
+  font-size: 2rem !important;
+}
+
+.plans-content-wrapper .subtitle {
+  font-size: 1rem !important;
+  text-align: left !important;
+}
+
+/* Improve plans section in dashboard */
+.plans-section {
+  background: var(--lightBorder);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid var(--lightBorder);
+  margin-top: 2rem;
+  grid-column: 1 / -1;
+  overflow: visible; /* Prevent cards from being cut off */
+}
+
+.plans-section .card-header {
+  margin-bottom: 2rem;
+}
+
+/* Ensure the plans grid fits well in the dashboard */
+.plans-content-wrapper {
+  width: 100%;
+  overflow: visible; /* Prevent content from being cut off */
+}
+
+.plans-content-wrapper > div {
+  /* Remove padding that might be causing issues */
+  padding: 0 !important;
+  background: transparent !important;
+  overflow: visible; /* Prevent content from being cut off */
+}
+
+/* Ensure the plans grid fits well in the dashboard */
+.plans-content-wrapper .plans-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 1.5rem !important;
+  margin: 0 !important;
+  width: 100%;
+  overflow: visible; /* Prevent content from being cut off */
+}
+
+/* Adjust plan cards for dashboard context */
+.plans-content-wrapper .plan-card {
+  background: var(--lightBorder) !important;
+  border: 1px solid var(--lightBorder) !important;
+  backdrop-filter: blur(5px) !important;
+  min-height: 450px !important; /* Increase minimum height */
+  height: auto;
+  overflow: visible; /* Prevent content from being cut off */
+  z-index: 10; /* Ensure cards are above other elements */
+  position: relative; /* Ensure z-index works */
+}
+
+.plans-content-wrapper .plan-card.popular {
+  border: 1px solid var(--orange) !important;
+  box-shadow: 0 0 15px rgba(241, 90, 36, 0.2) !important;
+  z-index: 20; /* Popular cards should be above regular cards */
+}
+
+/* Hide background elements when in dashboard */
+.plans-content-wrapper .plans-background {
+  display: none !important;
+}
+
+/* Adjust the payment modal to work within dashboard context */
+.payment-modal-overlay {
+  z-index: 2000 !important;
+}
+
+.payment-modal {
+  z-index: 2001 !important;
+}
+
+/* Responsive adjustments for plans in dashboard */
+@media (max-width: 768px) {
+  .plans-content-wrapper .plans-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .plans-section {
+    padding: 1rem;
+  }
+  
+  .plans-content-wrapper .plan-card {
+    min-height: 400px !important; /* Slightly smaller on mobile */
+  }
+}
+
+/* Glow effect for all dashboard cards */
+.card-glow {
+  border: 2px solid var(--orange);
+  box-shadow: 0 0 20px rgba(241, 90, 36, 0.3);
+  animation: pulse-border 2s infinite;
+}
+
+/* No events container styles */
+.no-events-container {
+  text-align: center;
+  padding: 2rem;
+}
+
+.no-events-message {
+  margin-bottom: 1rem;
+  color: var(--mediumText);
+  font-size: 1rem;
+}
+
+/* New Booking Notification */
+.new-booking-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--darkGrey);
+  border: 2px solid var(--orange);
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-width: 350px;
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.new-booking-notification .notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.new-booking-notification .notification-icon {
+  color: var(--orange);
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.new-booking-notification .notification-text {
+  flex: 1;
+}
+
+.new-booking-notification .notification-text h4 {
+  margin: 0 0 0.5rem 0;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.new-booking-notification .notification-text p {
+  margin: 0 0 0.25rem 0;
+  color: var(--lightText);
+  font-size: 0.9rem;
+}
+
+.new-booking-notification .ticket-id {
+  font-family: monospace;
+  background: var(--lightBorder);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.new-booking-notification .notification-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.new-booking-notification .view-ticket-btn {
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.new-booking-notification .view-ticket-btn:hover {
+  background: #d14a1f;
+}
+
+.new-booking-notification .close-btn {
+  background: transparent;
+  color: var(--mediumText);
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.new-booking-notification .close-btn:hover {
+  color: white;
+}
+
+.join-event-btn {
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #F15A24, #e05320);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(241, 90, 36, 0.3);
+  margin-top: 0.75rem;
+}
+
+.join-event-btn:hover {
+  background: linear-gradient(135deg, #e05320, #F15A24);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(241, 90, 36, 0.4);
+}
