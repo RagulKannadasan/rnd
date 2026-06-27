@@ -1,0 +1,134 @@
+import React, { useState, useEffect, lazy, Suspense, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import LoadingRunner from '../LoadingRunner/LoadingRunner';
+
+const Dashboard = lazy(() => import('../Dashboard/Dashboard'));
+const Community = lazy(() => import('../Community/Community'));
+const UserEventsPage = lazy(() => import('../UserEventsPage/UserEventsPage'));
+const PlansPage = lazy(() => import('../Plans/PlansPage'));
+const FitnessTracker = lazy(() => import('../FitnessTracker/FitnessTracker'));
+
+const SWIPEABLE_ROUTES = [
+  '/dashboard',
+  '/community',
+  '/user-events',
+  '/plans',
+  '/fitness'
+];
+
+const TabManager = () => {
+  const location = useLocation();
+  const [mountedTabs, setMountedTabs] = useState(
+    new Set(SWIPEABLE_ROUTES.includes(location.pathname) ? [location.pathname] : [])
+  );
+  
+  // Track previous path for animation direction
+  const prevPathRef = useRef(location.pathname);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animatingOutPath, setAnimatingOutPath] = useState(null);
+  const [direction, setDirection] = useState('right');
+
+  // Queue rendering for remaining tabs
+  useEffect(() => {
+    if (!SWIPEABLE_ROUTES.includes(location.pathname)) return;
+    const tabsToMount = SWIPEABLE_ROUTES.filter(path => !mountedTabs.has(path));
+    if (tabsToMount.length > 0) {
+      tabsToMount.forEach((path, index) => {
+        setTimeout(() => {
+          setMountedTabs(prev => new Set([...prev, path]));
+        }, 1500 + (index * 800));
+      });
+    }
+  }, [location.pathname]);
+
+  // Handle slide animations
+  useEffect(() => {
+    if (prevPathRef.current !== location.pathname && SWIPEABLE_ROUTES.includes(location.pathname) && SWIPEABLE_ROUTES.includes(prevPathRef.current)) {
+      const prevIndex = SWIPEABLE_ROUTES.indexOf(prevPathRef.current);
+      const currIndex = SWIPEABLE_ROUTES.indexOf(location.pathname);
+      
+      setDirection(currIndex > prevIndex ? 'right' : 'left');
+      setAnimatingOutPath(prevPathRef.current);
+      setIsAnimating(true);
+      
+      const timeout = setTimeout(() => {
+        setIsAnimating(false);
+        setAnimatingOutPath(null);
+      }, 350); // Match CSS transition duration
+      
+      prevPathRef.current = location.pathname;
+      return () => clearTimeout(timeout);
+    } else {
+      prevPathRef.current = location.pathname;
+    }
+  }, [location.pathname]);
+
+  if (!SWIPEABLE_ROUTES.includes(location.pathname)) return null;
+
+  const getTabStyle = (path) => {
+    const isActive = location.pathname === path;
+    const isAnimatingOut = animatingOutPath === path;
+    const isMounted = mountedTabs.has(path);
+
+    if (!isMounted || (!isActive && !isAnimatingOut)) {
+      return { display: 'none' };
+    }
+
+    // Base style that doesn't break body scrolling for active tab
+    const style = {
+      width: '100%',
+      transition: 'transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1)',
+      backgroundColor: 'var(--bg-page, #0e0e0e)' // Prevent seeing through pages
+    };
+
+    if (isActive && isAnimating) {
+      style.transform = direction === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
+      // Force a reflow before clearing the transform
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`tab-container-${path}`);
+        if (el) el.style.transform = 'translateX(0)';
+      });
+    } else if (isAnimatingOut) {
+      style.position = 'absolute';
+      style.top = 0;
+      style.left = 0;
+      style.zIndex = 5; // Put outgoing underneath
+      style.transform = direction === 'right' ? 'translateX(-30%)' : 'translateX(30%)';
+    } else {
+      style.transform = 'translateX(0)';
+      style.position = 'static';
+      style.zIndex = 10;
+    }
+
+    return style;
+  };
+
+  const getComponentForPath = (path) => {
+    switch (path) {
+      case '/dashboard': return <Dashboard />;
+      case '/community': return <Community />;
+      case '/user-events': return <UserEventsPage />;
+      case '/plans': return <PlansPage />;
+      case '/fitness': return <FitnessTracker />;
+      default: return null;
+    }
+  };
+
+  return (
+    <Suspense fallback={<LoadingRunner />}>
+      <div style={{ position: 'relative', width: '100%', minHeight: '100vh', overflowX: 'hidden' }}>
+        {SWIPEABLE_ROUTES.map(path => (
+          <div 
+            key={path} 
+            id={`tab-container-${path}`}
+            style={getTabStyle(path)}
+          >
+            {mountedTabs.has(path) && getComponentForPath(path)}
+          </div>
+        ))}
+      </div>
+    </Suspense>
+  );
+};
+
+export default TabManager;

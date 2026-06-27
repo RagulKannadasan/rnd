@@ -5,7 +5,7 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { auth, db } from '../../firebase';
 import firebaseService from '../../services/firebaseService';
 import { formatDate } from '../../utils/dateUtils';
-import DashboardNav from '../DashboardNav/DashboardNav';
+
 import './UserEventsPage.css';
 
 function UserEventsPage() {
@@ -513,7 +513,7 @@ function UserEventsPage() {
 
   return (
     <div className="events-page">
-      <DashboardNav />
+
       <div className="events-container">
         <div className="events-header">
           <h1>Weekly Community Run</h1>

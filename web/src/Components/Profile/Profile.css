@@ -1,11 +1,12 @@
 .profile {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--appColor) 0%, var(--darkGrey) 100%);
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
   color: white;
+  position: relative;
 }
 
 .profile-main {
-  padding-top: 70px;
+  padding-top: 100px;
 }
 
 .profile-content {
@@ -53,14 +54,17 @@
 }
 
 .profile-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   height: 100%;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .card-header {
@@ -91,7 +95,7 @@
 .profile-avatar {
   width: 80px;
   height: 80px;
-  background: var(--orange);
+  background: linear-gradient(135deg, #F15A24 50%, #ff7849 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -99,6 +103,7 @@
   font-size: 2rem;
   color: white;
   flex-shrink: 0;
+  box-shadow: 0 8px 20px rgba(241, 90, 36, 0.4);
 }
 
 .profile-basic-info h3 {
@@ -131,8 +136,17 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.detail-item:hover {
+  background: rgba(241, 90, 36, 0.05);
+  border-color: rgba(241, 90, 36, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .detail-icon {
@@ -199,7 +213,8 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 15px;
   height: 100%;
   transition: all 0.3s ease;
@@ -345,12 +360,12 @@
 
 /* Animation Classes */
 .profile-card {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .profile-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 30px rgba(241, 90, 36, 0.15);
 }
 
 .achievement-item {
@@ -403,13 +418,17 @@
 }
 
 .popup-content {
-  background: #333;
+  background: rgba(25, 25, 25, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(241, 90, 36, 0.5);
   padding: 2rem;
-  border-radius: 10px;
+  border-radius: 16px;
   max-width: 500px;
   width: 90%;
   position: relative;
   text-align: center;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .close-btn {
@@ -455,4 +474,11 @@
 
 .popup-cancel-btn:hover {
   background-color: #555;
+}
+
+@media (max-width: 768px) {
+  .profile-main {
+    padding-top: 100px;
+    padding-bottom: 100px;
+  }
 }

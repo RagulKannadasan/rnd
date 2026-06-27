@@ -3,6 +3,7 @@ import { collection, getDocs, query, Timestamp, orderBy } from 'firebase/firesto
 import { db } from '../../firebase'; // Adjust path if needed
 import { formatDate } from '../../utils/dateUtils';
 import './reports.css'; // We will create/update this file
+import LoadingRunner from '../LoadingRunner/LoadingRunner';
 
 const Reports = () => {
   const [reportData, setReportData] = useState({
@@ -816,7 +817,9 @@ const Reports = () => {
 
         <div className="reports-content">
             {loading ? (
-                <div className="loading">Loading reports...</div>
+                <div className="loading" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <LoadingRunner message="Loading reports..." />
+                </div>
             ) : error ? (
                 <div className="error">{error}</div>
             ) : (

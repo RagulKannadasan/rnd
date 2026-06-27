@@ -51,7 +51,7 @@
 .plans-content {
   position: relative;
   z-index: 10;
-  padding: 4rem 2rem;
+  padding: 100px 2rem 4rem;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -191,7 +191,7 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 8px 25px rgba(241, 90, 36, 0.3);
   animation: pulse 3s ease-in-out infinite;
 }
 
@@ -403,11 +403,11 @@
 .cta-button.popular-btn {
   background: linear-gradient(135deg, #F15A24);
   color: #000;
-  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 8px 25px rgba(241, 90, 36, 0.3);
 }
 
 .cta-button.popular-btn:hover {
-  box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5);
+  box-shadow: 0 12px 35px rgba(241, 90, 36, 0.5);
 }
 
 .button-arrow {
@@ -1002,5 +1002,22 @@
   
   .security-icon {
     align-self: center;
+  }
+}
+@media (max-width: 768px) {
+  .plans-content {
+    padding-top: 100px;
+    padding-bottom: 100px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .plans-grid {
+    gap: 1rem;
+  }
+  
+  .plan-card {
+    border-radius: 15px;
+    margin: 0;
   }
 }

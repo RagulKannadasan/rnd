@@ -4,7 +4,7 @@ import {
   Routes,
   Route
 } from 'react-router-dom';
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from './firebase';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
@@ -15,32 +15,30 @@ import statsScheduler from './services/statsScheduler';
 // Import InstallPrompt component
 import InstallPrompt from './Components/InstallPrompt/InstallPrompt';
 
-import Home from './Components/Home';
-import EventsPage from './Components/EventsPage';
-import SignIn from './Components/SignIn/SignIn';
-import SignUp from './Components/SignUp/SignUp';
-import Dashboard from './Components/Dashboard/Dashboard';
-import Community from './Components/Community/Community';
-import Profile from './Components/Profile/Profile';
-import Admin from './Components/admin/admin';
-import QRScanner from './Components/admin/QRScanner';
-import QRInfo from './Components/admin/QRInfo';
-import Payments from './Components/Payments/Payments';
-import UserEventsPage from './Components/UserEventsPage/UserEventsPage';
-import NotificationsPage from './Components/Notifications/NotificationsPage';
-import TicketVerification from './Components/TicketVerification/TicketVerification';
-// Import the new PlansPage component
-import PlansPage from './Components/Plans/PlansPage';
-// Import the new FitnessTracker component
-import FitnessTracker from './Components/FitnessTracker/FitnessTracker';
-// Import Privacy Policy component
-import PrivacyPolicy from './Components/PrivacyPolicy/PrivacyPolicy';
-// Import Terms component
-import Terms from './Components/TermsOfService/Terms';
-// Import Refund Policy component
-import RefundPolicy from './Components/RefundPolicy/RefundPolicy';
-// Import FAQ component
-import FAQ from './Components/FAQ/FAQ';
+import LoadingRunner from './Components/LoadingRunner/LoadingRunner';
+import SwipeableLayout from './Components/SwipeableLayout/SwipeableLayout';
+import TabManager from './Components/SwipeableLayout/TabManager';
+
+const Home = lazy(() => import('./Components/Home'));
+const EventsPage = lazy(() => import('./Components/EventsPage'));
+const SignIn = lazy(() => import('./Components/SignIn/SignIn'));
+const SignUp = lazy(() => import('./Components/SignUp/SignUp'));
+const Dashboard = lazy(() => import('./Components/Dashboard/Dashboard'));
+const Community = lazy(() => import('./Components/Community/Community'));
+const Profile = lazy(() => import('./Components/Profile/Profile'));
+const Admin = lazy(() => import('./Components/admin/admin'));
+const QRScanner = lazy(() => import('./Components/admin/QRScanner'));
+const QRInfo = lazy(() => import('./Components/admin/QRInfo'));
+const Payments = lazy(() => import('./Components/Payments/Payments'));
+const UserEventsPage = lazy(() => import('./Components/UserEventsPage/UserEventsPage'));
+const NotificationsPage = lazy(() => import('./Components/Notifications/NotificationsPage'));
+const TicketVerification = lazy(() => import('./Components/TicketVerification/TicketVerification'));
+const PlansPage = lazy(() => import('./Components/Plans/PlansPage'));
+const FitnessTracker = lazy(() => import('./Components/FitnessTracker/FitnessTracker'));
+const PrivacyPolicy = lazy(() => import('./Components/PrivacyPolicy/PrivacyPolicy'));
+const Terms = lazy(() => import('./Components/TermsOfService/Terms'));
+const RefundPolicy = lazy(() => import('./Components/RefundPolicy/RefundPolicy'));
+const FAQ = lazy(() => import('./Components/FAQ/FAQ'));
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -156,34 +154,36 @@ function App() {
     <ErrorBoundary>
       <Router>
         <InstallPrompt />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/events" element={<EventsPage />} />
-          <Route path="/SignIn" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/qr-scanner" element={<QRScanner />} />
-          <Route path="/qr-info" element={<QRInfo />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/user-events" element={<UserEventsPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/ticket" element={<TicketVerification />} />
-          {/* Add the new Plans route */}
-          <Route path="/plans" element={<PlansPage />} />
-          {/* Add the new Fitness Tracker route */}
-          <Route path="/fitness" element={<FitnessTracker />} />
-          {/* Add Privacy Policy route */}
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          {/* Add Terms route */}
-          <Route path="/terms" element={<Terms />} />
-          {/* Add Refund Policy route */}
-          <Route path="/refund-policy" element={<RefundPolicy />} />
-          {/* Add FAQ route */}
-          <Route path="/faq" element={<FAQ />} />
-        </Routes>
+        <Suspense fallback={<LoadingRunner />}>
+          <SwipeableLayout>
+            <TabManager />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/SignIn" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              
+              {/* Tab routes are now handled by TabManager but we keep them here with null element to prevent React Router 'No match' warnings */}
+              <Route path="/dashboard" element={null} />
+              <Route path="/community" element={null} />
+              <Route path="/user-events" element={null} />
+              <Route path="/plans" element={null} />
+              <Route path="/fitness" element={null} />
+
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/qr-scanner" element={<QRScanner />} />
+              <Route path="/qr-info" element={<QRInfo />} />
+              <Route path="/payments" element={<Payments />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/ticket" element={<TicketVerification />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
+              <Route path="/faq" element={<FAQ />} />
+            </Routes>
+          </SwipeableLayout>
+        </Suspense>
       </Router>
     </ErrorBoundary>
   );

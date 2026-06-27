@@ -1,7 +1,7 @@
 .fitness-tracker {
   min-height: 100vh;
-  background-color: #000000; /* Changed to black */
-  color: #ffffff; /* Changed to white for better contrast */
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+  color: #ffffff;
 }
 
 .fitness-tracker-content {
@@ -55,11 +55,13 @@
 }
 
 .fitness-content {
-  background: #000000; /* Changed to black */
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
   padding: 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Darker shadow */
-  border: 1px solid #333333; /* Added dark gray border */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Dashboard View Styles */
@@ -71,13 +73,20 @@
 }
 
 .stat-card {
-  background: #111111; /* Dark background */
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
   padding: 20px;
   text-align: center;
-  border: 1px solid #F15A24; /* Orange border */
-  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
-  color: #ffffff; /* White text */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(241, 90, 36, 0.3);
+  transform: translateY(-2px);
 }
 
 .stat-card h3 {
@@ -107,12 +116,12 @@
 }
 
 .chart-container {
-  background: #111111; /* Dark background */
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
   padding: 20px;
-  border: 1px solid #F15A24; /* Orange border */
-  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
-  color: #ffffff; /* White text */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  color: #ffffff;
 }
 
 .chart-container h3 {
@@ -151,12 +160,12 @@
 }
 
 .tip-card {
-  background: #1a1a1a; /* Dark background */
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
   padding: 20px;
-  border: 1px solid #F15A24; /* Orange border */
-  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
-  color: #ffffff; /* White text */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  color: #ffffff;
 }
 
 .tip-card h4 {
@@ -176,13 +185,13 @@
 }
 
 .profile-form, .meal-form, .workout-form {
-  background: #111111; /* Dark background */
+  background: rgba(0, 0, 0, 0.2);
   padding: 20px;
-  border-radius: 8px;
+  border-radius: 15px;
   margin-bottom: 30px;
-  border: 1px solid #F15A24; /* Orange border */
-  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
-  color: #ffffff; /* White text */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  color: #ffffff;
 }
 
 .form-step {
@@ -348,15 +357,16 @@
 .next-button,
 .back-button,
 .save-button {
-  background-color: #F15A24;
+  background: linear-gradient(135deg, #F15A24 50%, #ff7849 100%);
   color: white;
   border: none;
   padding: 12px 20px;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
   font-weight: bold;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.3);
 }
 
 .log-meal-button:hover,
@@ -364,9 +374,9 @@
 .save-profile-button:hover,
 .get-nutrition-button:hover,
 .next-button:hover,
-.back-button:hover,
 .save-button:hover {
-  background-color: #d64a1f;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(241, 90, 36, 0.5);
 }
 
 .log-meal-button:disabled,
@@ -435,11 +445,11 @@
 /* Meal/Workout History */
 .meal-history,
 .workout-history {
-  background: #111111;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
   padding: 20px;
-  border: 1px solid #F15A24;
-  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   color: #ffffff;
   margin-top: 30px;
 }
@@ -519,11 +529,11 @@
 
 /* Weekly Summary */
 .weekly-summary {
-  background: #111111;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
   padding: 20px;
-  border: 1px solid #F15A24;
-  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   color: #ffffff;
   margin: 30px 0;
 }
@@ -563,11 +573,11 @@
 
 /* Notifications Panel */
 .notifications-panel {
-  background: #111111;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
   padding: 20px;
-  border: 1px solid #F15A24;
-  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   color: #ffffff;
   margin: 30px 0;
 }
@@ -645,11 +655,11 @@
 
 /* AI Assistant */
 .ai-assistant {
-  background: #111111;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
   padding: 20px;
-  border: 1px solid #F15A24;
-  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   color: #ffffff;
   margin: 30px 0;
 }
@@ -1104,4 +1114,12 @@
 .add-water-btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+@media (max-width: 768px) {
+  .fitness-tracker-content {
+    padding-top: 100px;
+    padding-bottom: 100px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
 }

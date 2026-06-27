@@ -3,6 +3,7 @@ import { collection, getDocs, doc, updateDoc, serverTimestamp, query, orderBy, w
 import { db } from '../../firebase';
 import { formatDate } from '../../utils/dateUtils';
 import './subscribers.css'; // Import the new stylesheet
+import LoadingRunner from '../LoadingRunner/LoadingRunner';
 
 const Subscribers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -1042,11 +1043,8 @@ const Subscribers = () => {
 
   if (loading) {
     return (
-      <div className="subscribers">
-        <div className="loading-state">
-          <div className="loading-spinner"></div>
-          <p>Loading subscribers...</p>
-        </div>
+      <div className="subscribers" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <LoadingRunner message="Loading subscribers..." />
       </div>
     );
   }
@@ -1247,9 +1245,8 @@ const Subscribers = () => {
             </div>
             
             {loadingUserDetails ? (
-              <div className="modal-loading">
-                <div className="loading-spinner"></div>
-                <p>Loading user details and payment history...</p>
+              <div className="modal-loading" style={{ minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <LoadingRunner message="Loading user details and payment history..." />
               </div>
             ) : (
               <div className="modal-body">
@@ -1364,9 +1361,8 @@ const Subscribers = () => {
                 <div className="user-bookings-section">
                   <h3>Payment History ({userBookings.length} bookings)</h3>
                   {loadingUserDetails ? (
-                    <div className="loading-bookings">
-                      <div className="loading-spinner"></div>
-                      <p>Fetching payment history...</p>
+                    <div className="loading-bookings" style={{ minHeight: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <LoadingRunner message="Fetching payment history..." />
                     </div>
                   ) : userBookings.length > 0 ? (
                     <div className="bookings-list">

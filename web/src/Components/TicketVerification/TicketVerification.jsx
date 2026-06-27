@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { formatDate } from '../../utils/dateUtils';
 import './TicketVerification.css';
+import LoadingRunner from '../LoadingRunner/LoadingRunner';
 
 const TicketVerification = () => {
   const location = useLocation();
@@ -54,8 +55,8 @@ const TicketVerification = () => {
 
   if (loading) {
     return (
-      <div className="ticket-verification-container">
-        <div className="loading">Loading ticket information...</div>
+      <div className="ticket-verification-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <LoadingRunner message="Loading ticket information..." />
       </div>
     );
   }

@@ -51,7 +51,10 @@
 
 .the-best {
   margin-top: 4rem;
-  background-color: #393d42;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 4rem;
   width: fit-content;
   padding: 20px 13px;
@@ -60,6 +63,7 @@
   align-items: center;
   justify-content: flex-start;
   color: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .the-best > span {
@@ -119,13 +123,24 @@
   display: flex;
   padding-top: 2rem;
   gap: 2rem;
-  font-weight: normal !important;
+  font-weight: 700 !important;
 }
 
 .hero-btns > :nth-child(1) {
   color: white;
-  background-color:#F15A24;
+  background: linear-gradient(135deg, #F15A24 50%, #ff7849 100%);
   width: 8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.3);
+}
+.hero-btns > :nth-child(1):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(241, 90, 36, 0.5);
 }
 
 .hero-btns > :nth-child(2) {
@@ -133,6 +148,15 @@
   background-color: transparent;
   width: 8rem;
   border: 2px solid var(--orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.hero-btns > :nth-child(2):hover {
+  background: rgba(241, 90, 36, 0.1);
+  transform: translateY(-2px);
 }
 
 /* ✅ Bold, dark box for "Where Runners Become Doers" */
@@ -140,8 +164,11 @@
   display: flex;
   flex-direction: row;
   
-  background: rgba(31, 31, 31, 0.5); /* 50% transparency */
-  background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
   color: white;
   font-weight: 700;
   padding: 1rem 1.5rem;
@@ -153,18 +180,13 @@
   width: fit-content;
   font-size: 1rem;
   text-align: left;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(241, 90, 36, 0.3);
-  backdrop-filter: blur(5px); /* Reduced blur for better visibility */
-  -webkit-backdrop-filter: blur(5px);
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   z-index: 10;
 }
 
 .heart-rate:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(241, 90, 36, 0.6);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 30px rgba(241, 90, 36, 0.15);
 }
 
 .heart-rate-icon {
@@ -204,8 +226,11 @@
 .calories {
   display: flex;
   flex-direction: column;
-  background: rgba(31, 31, 31, 0.5); /* 50% transparency */
-  background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
   color: white;
   font-weight: 700;
   padding: 1rem 1.5rem;
@@ -216,18 +241,13 @@
   width: fit-content;
   font-size: 1rem;
   text-align: left;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(241, 90, 36, 0.3);
-  backdrop-filter: blur(5px); /* Reduced blur for better visibility */
-  -webkit-backdrop-filter: blur(5px);
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   z-index: 10;
 }
 
 .calories:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(241, 90, 36, 0.6);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 30px rgba(241, 90, 36, 0.15);
 }
 
 .calories-icon {
@@ -343,20 +363,24 @@
 
 /* AI Fitness Tracker Card */
 .ai-fitness-card {
-  background: rgba(31, 31, 31, 0.5); /* 50% transparency */
-  background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
-  backdrop-filter: blur(5px); /* Reduced blur for better visibility */
-  -webkit-backdrop-filter: blur(5px);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 16px;
   padding: 1.5rem;
   margin-top: 1.5rem;
-  border: 1px solid rgba(241, 90, 36, 0.3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
   color: white;
   max-width: 350px;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   z-index: 10;
+}
+
+.ai-fitness-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 30px rgba(241, 90, 36, 0.15);
 }
 
 .ai-card-title {
@@ -459,12 +483,11 @@
     text-align: center;
     align-items: center;
     flex-direction: column;
-    background: rgba(31, 31, 31, 0.5); /* 50% transparency */
-    background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(241, 90, 36, 0.3);
-    backdrop-filter: blur(5px); /* Reduced blur for better visibility */
-    -webkit-backdrop-filter: blur(5px);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
   }
 
   .heart-rate-icon {
@@ -505,12 +528,11 @@
     border-radius: 10px;
     text-align: center;
     align-items: center;
-    background: rgba(31, 31, 31, 0.5); /* 50% transparency */
-    background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(241, 90, 36, 0.3);
-    backdrop-filter: blur(5px); /* Reduced blur for better visibility */
-    -webkit-backdrop-filter: blur(5px);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
   }
 
   .calories-icon {
@@ -552,7 +574,6 @@
     animation: progressAnimation 2s ease-in-out infinite alternate;
   }
 
-  /* Mobile styles for AI Fitness Tracker Card */
   .ai-fitness-card {
     max-width: 80%;
     width: 80%;
@@ -562,12 +583,11 @@
     position: relative;
     transform: none;
     order: 4;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-    background: rgba(31, 31, 31, 0.5); /* 50% transparency */
-    background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
-    backdrop-filter: blur(5px); /* Reduced blur for better visibility */
-    -webkit-backdrop-filter: blur(5px);
-    border: 1px solid rgba(241, 90, 36, 0.3);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
   }
   
   .ai-card-title {

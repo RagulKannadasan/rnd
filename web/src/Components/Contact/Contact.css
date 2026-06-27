@@ -96,6 +96,11 @@ body {
 
 
 
+.header-text .stroke-text {
+  -webkit-text-stroke: 2px #F15A24;
+  font-weight: 900; /* Extra bold */
+}
+
 /* 2) Apply the outline style */
 .header-text .red-text {
   font-family: 'Bebas Neue', sans-serif;   /* tall, condensed caps */

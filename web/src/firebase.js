@@ -7,13 +7,13 @@ import { useState, useEffect } from 'react';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAc0WzUsgae17Zyo4dN3WfuBIvgpVBrTQA",
-  authDomain: "techvaseegrah-runanddevelop.firebaseapp.com",
-  projectId: "techvaseegrah-runanddevelop",
-  storageBucket: "techvaseegrah-runanddevelop.firebasestorage.app",
-  messagingSenderId: "876140121414",
-  appId: "1:876140121414:web:4bc391bcb17cbe35c32947",
-  measurementId: "G-GZJS335Y7G"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

@@ -1,11 +1,10 @@
 .programs {
   padding: 2rem;
-  background-color: #111;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
   color: white;
   text-align: center;
   width: 100%;
   box-sizing: border-box;
-  
 }
 
 .programs-header {
@@ -33,9 +32,13 @@
 }
 
 .category {
-  background-color: #333;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
   padding: 2rem 1.5rem;
-  border-radius: 15px;
+  border-radius: 16px;
   width: 280px;
   min-height: 350px;
   max-width: 100%;
@@ -43,22 +46,21 @@
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
-  overflow:visible;
+  overflow: visible;
   box-sizing: border-box;
-  border: 1px solid transparent;
 }
 
 /* Hover effects */
 .category:hover,
 .category.jump {
-  background-color: #F15A24;
+  background: linear-gradient(135deg, rgba(241, 90, 36, 0.9) 0%, rgba(255, 120, 73, 0.9) 100%);
   color: white;
   cursor: pointer;
-  transform: translateY(-1px) scale(1.1);
-  box-shadow: 0 1px 80px #f15b2489;
-  border: 1px solid #f44336;
+  transform: translateY(-5px);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(241, 90, 36, 0.2);
+  border: 1px solid rgba(241, 90, 36, 0.6);
 }
 
 .category:hover .program-heading,

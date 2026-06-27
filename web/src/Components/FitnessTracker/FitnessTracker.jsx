@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './FitnessTracker.css';
-import DashboardNav from '../DashboardNav/DashboardNav';
 import { auth } from '../../firebase';
+import LoadingRunner from '../LoadingRunner/LoadingRunner';
 import { onAuthStateChanged } from 'firebase/auth';
 import Profile from './Profile';
 import MealTracker from './MealTracker';
@@ -92,7 +92,7 @@ const FitnessTracker = () => {
   };
 
   if (loading) {
-    return <div className="fitness-tracker">Loading...</div>;
+    return <div className="fitness-tracker"><LoadingRunner message="Loading fitness tracker..." /></div>;
   }
 
   if (!user) {
@@ -103,7 +103,7 @@ const FitnessTracker = () => {
   if (!profileSetupComplete) {
     return (
       <div className="fitness-tracker">
-        <DashboardNav />
+  
         <div className="fitness-tracker-content">
           <div className="fitness-header">
             <h1>Fitness & Nutrition Tracker</h1>
@@ -119,7 +119,7 @@ const FitnessTracker = () => {
 
   return (
     <div className="fitness-tracker">
-      <DashboardNav />
+
       <div className="fitness-tracker-content">
         <div className="fitness-header">
           <h1>Fitness & Nutrition Tracker</h1>

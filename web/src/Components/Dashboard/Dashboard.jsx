@@ -6,11 +6,12 @@ import { auth, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { QRCodeCanvas } from 'qrcode.react';
-import DashboardNav from '../DashboardNav/DashboardNav';
+
 import TicketNotification from './TicketNotification';
 import PlanExpirationNotification from './PlanExpirationNotification';
 import { formatDate } from '../../utils/dateUtils';
 import './Dashboard.css';
+import LoadingRunner from '../LoadingRunner/LoadingRunner';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -384,8 +385,8 @@ Thank you for booking with R&D - Run and Develop!
   if (loading) {
     return (
       <div className="dashboard">
-        <DashboardNav />
-        <div className="dashboard-main"><div className="dashboard-content"><div className="loading-state"><p>Loading dashboard...</p></div></div></div>
+
+        <div className="dashboard-main"><div className="dashboard-content"><div className="loading-state"><LoadingRunner message="Loading dashboard..." /></div></div></div>
       </div>
     );
   }
@@ -393,7 +394,7 @@ Thank you for booking with R&D - Run and Develop!
   if (!user) {
     return (
       <div className="dashboard">
-        <DashboardNav />
+
         <div className="dashboard-main"><div className="dashboard-content"><div className="error-state"><p>Please log in to view your dashboard.</p><button onClick={() => navigate('/SignIn')}>Go to SignIn</button></div></div></div>
       </div>
     );
@@ -401,7 +402,11 @@ Thank you for booking with R&D - Run and Develop!
 
   return (
     <div className="dashboard">
-      <DashboardNav />
+      <div className="dashboard-background">
+        <div className="blur dashboard-blur-1"></div>
+        <div className="blur dashboard-blur-2"></div>
+      </div>
+
       <TicketNotification bookings={bookings} onDismiss={() => {}} />
       {showNewBookingNotification && latestBooking && (
         <div className="new-booking-notification">
@@ -436,421 +441,188 @@ Thank you for booking with R&D - Run and Develop!
       <div className="dashboard-main">
         <div className="dashboard-content">
           <div className="dashboard-grid">
-            {/* User Profile Card (Modified to include stats) */}
-            <motion.div className="profile-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <div className="profile-header">
-                <div className="profile-avatar">{user.photoURL ? <img src={user.photoURL} alt="Profile" /> : <FaUser />}</div>
-                <div className="profile-info">
-                  <h2>{user.name}</h2>
-                  <p className="member-since">Member since {user.memberSince && typeof user.memberSince === 'string' ? user.memberSince : 'Unknown'}</p>
-                </div>
-              </div>
-              
-              {/* User Statistics */}
-              <div className="profile-stats">
-                <div className="stat-item">
-                  <span className="stat-number">{userStats.totalRuns}</span>
-                  <span className="stat-label">Total Runs</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-number">{userStats.totalDistance} km</span>
-                  <span className="stat-label">Distance</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-number">{userStats.currentStreak}</span>
-                  <span className="stat-label">Current Streak</span>
-                </div>
-              </div>
-              
-              {/* Refresh Stats Button */}
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                marginTop: '0.75rem' 
-              }}>
-                <button 
-                  onClick={() => {
-                    if (user && user.uid) {
-                      fetchUserStats(user.uid);
-                    }
-                  }}
-                  style={{
-                    padding: '0.4rem 0.8rem',
-                    backgroundColor: 'rgba(241, 90, 36, 0.2)',
-                    color: 'white',
-                    border: '1px solid var(--orange)',
-                    borderRadius: '16px',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem'
-                  }}
-                >
-                  Refresh Stats
-                </button>
-              </div>
-            </motion.div>
-
-            {/* Fitness Tracker Card with My Tickets */}
-            <motion.div className="events-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-              <div className="card-header">
-                <h3>Fitness & Nutrition</h3>
-              </div>
-              <div className="events-list" style={{ minHeight: 'auto' }}>
-                <div className="event-item">
-                  <div className="event-info">
-                    <h4>Track Your Progress</h4>
-                    <p className="event-details">
-                      Monitor your meals, workouts, and nutrition goals
-                    </p>
+            {/* Top Row: Profile and Stats */}
+            <div className="dashboard-row row-top">
+              {/* Profile Card */}
+              <motion.div className="profile-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <div className="profile-header">
+                  <div className="profile-avatar">{user.photoURL ? <img src={user.photoURL} alt="Profile" /> : <FaUser />}</div>
+                  <div className="profile-info">
+                    <h2>{user.name}</h2>
+                    <p className="member-since">Member since {user.memberSince && typeof user.memberSince === 'string' ? user.memberSince : 'Unknown'}</p>
                   </div>
-                  <button className="join-event-btn" onClick={() => navigate('/fitness')}>
-                    Open Tracker
+                </div>
+              </motion.div>
+
+              {/* Stats Card */}
+              <motion.div className="stats-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+                <div className="profile-stats">
+                  <div className="stat-item">
+                    <span className="stat-number">{userStats.totalRuns}</span>
+                    <span className="stat-label">Total Runs</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number">{userStats.totalDistance} km</span>
+                    <span className="stat-label">Distance</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-number">{userStats.currentStreak}</span>
+                    <span className="stat-label">Current Streak</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.75rem' }}>
+                  <button 
+                    onClick={() => {
+                      if (user && user.uid) {
+                        fetchUserStats(user.uid);
+                      }
+                    }}
+                    className="refresh-stats-btn"
+                  >
+                    Refresh Stats
                   </button>
                 </div>
-              </div>
-              
-              {/* My Tickets Section */}
-              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '1rem', paddingTop: '1rem' }}>
-                <div className="card-header" style={{ padding: '0.5rem 0' }}>
+              </motion.div>
+            </div>
+
+            {/* Middle Row: Events and Plan */}
+            <div className="dashboard-row row-middle">
+              {/* Unified Upcoming Event Card */}
+              <motion.div className="event-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+                <div className="card-header">
                   <FaTicketAlt className="card-icon" />
-                  <h3>My Tickets</h3>
+                  <h3>Upcoming Event</h3>
                 </div>
                 <div className="events-list" style={{ maxHeight: 'none', minHeight: 'auto' }}>
                   {bookings && bookings.length > 0 ? (
                     (() => {
-                      // Sort bookings by event date (descending - newest first)
+                      // Sort bookings by event date (most recent first)
                       const sortedBookings = [...bookings].sort((a, b) => {
-                        // Sort by event date (descending - newest first)
-                        // Handle different date formats for sorting
                         let dateA, dateB;
-                        
-                        if (a.eventDate instanceof Date) {
-                          dateA = a.eventDate;
-                        } else if (a.eventDate.toDate && typeof a.eventDate.toDate === 'function') {
-                          dateA = a.eventDate.toDate();
-                        } else if (typeof a.eventDate === 'string') {
-                          dateA = new Date(a.eventDate);
-                        } else if (a.eventDate) {
-                          dateA = new Date(a.eventDate);
-                        } else {
-                          dateA = new Date(); // Default to now if no date
+                        try {
+                          if (a.eventDate instanceof Date) dateA = a.eventDate;
+                          else if (a.eventDate.toDate && typeof a.eventDate.toDate === 'function') dateA = a.eventDate.toDate();
+                          else if (typeof a.eventDate === 'string') dateA = new Date(a.eventDate);
+                          else if (a.eventDate.seconds) dateA = new Date(a.eventDate.seconds * 1000 + (a.eventDate.nanoseconds || 0) / 1000000);
+                          else dateA = new Date(a.eventDate);
+                          
+                          if (b.eventDate instanceof Date) dateB = b.eventDate;
+                          else if (b.eventDate.toDate && typeof b.eventDate.toDate === 'function') dateB = b.eventDate.toDate();
+                          else if (typeof b.eventDate === 'string') dateB = new Date(b.eventDate);
+                          else if (b.eventDate.seconds) dateB = new Date(b.eventDate.seconds * 1000 + (b.eventDate.nanoseconds || 0) / 1000000);
+                          else dateB = new Date(b.eventDate);
+                        } catch (e) {
+                          return 0;
                         }
-                        
-                        if (b.eventDate instanceof Date) {
-                          dateB = b.eventDate;
-                        } else if (b.eventDate.toDate && typeof b.eventDate.toDate === 'function') {
-                          dateB = b.eventDate.toDate();
-                        } else if (typeof b.eventDate === 'string') {
-                          dateB = new Date(b.eventDate);
-                        } else if (b.eventDate) {
-                          dateB = new Date(b.eventDate);
-                        } else {
-                          dateB = new Date(); // Default to now if no date
-                        }
-                        
-                        return dateB - dateA; // Descending order
+                        return dateB - dateA;
                       });
                       
-                      // Get only the most recent booking
-                      const recentBooking = sortedBookings[0];
+                      const mostRecentBooking = sortedBookings[0];
                       
-                      // Handle date display for the recent booking
                       let displayDate;
-                      if (recentBooking.eventDate instanceof Date) {
-                        displayDate = recentBooking.eventDate;
-                      } else if (recentBooking.eventDate.toDate && typeof recentBooking.eventDate.toDate === 'function') {
-                        displayDate = recentBooking.eventDate.toDate();
-                      } else if (typeof recentBooking.eventDate === 'string') {
-                        displayDate = new Date(recentBooking.eventDate);
-                      } else if (recentBooking.eventDate) {
-                        displayDate = new Date(recentBooking.eventDate);
-                      } else {
-                        displayDate = new Date(); // Default to now if no date
+                      try {
+                        if (mostRecentBooking.eventDate instanceof Date) displayDate = mostRecentBooking.eventDate;
+                        else if (mostRecentBooking.eventDate.toDate && typeof mostRecentBooking.eventDate.toDate === 'function') displayDate = mostRecentBooking.eventDate.toDate();
+                        else if (typeof mostRecentBooking.eventDate === 'string') displayDate = new Date(mostRecentBooking.eventDate);
+                        else if (mostRecentBooking.eventDate.seconds) displayDate = new Date(mostRecentBooking.eventDate.seconds * 1000 + (mostRecentBooking.eventDate.nanoseconds || 0) / 1000000);
+                        else displayDate = new Date(mostRecentBooking.eventDate);
+                      } catch (e) {
+                        displayDate = new Date();
                       }
                       
                       return (
-                        <div key={recentBooking.id} className="ticket-item-container" 
-                             style={{ 
-                               padding: '0.75rem', 
-                               marginBottom: '0.5rem',
-                               minHeight: 'auto'
-                             }}>
-                          {/* Compact Ticket Info */}
-                          <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center',
-                            flexWrap: 'wrap'
-                          }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <h4 style={{ 
-                                margin: '0 0 0.25rem 0', 
-                                fontSize: '0.95rem',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}>
-                                {recentBooking.eventName || 'Event Name'}
-                              </h4>
-                              <p className="event-details" style={{ 
-                                margin: 0, 
-                                fontSize: '0.8rem',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}>
-                                {displayDate ? formatDate(displayDate) : 'Date not available'}
-                                • {recentBooking.eventTime || 'Time not available'}
-                              </p>
-                              <p className="booking-id-preview" style={{ 
-                                margin: '0.1rem 0 0 0', 
-                                fontSize: '0.7rem' 
-                              }}>
-                                ID: {recentBooking.id ? recentBooking.id.substring(0, 8) : 'N/A'}
-                              </p>
-                              <p className="event-status" style={{ 
-                                margin: '0.1rem 0 0 0', 
-                                fontSize: '0.7rem' 
-                              }}>
-                                Status: <span className={recentBooking.status || 'confirmed'}>
-                                  {recentBooking.status ? recentBooking.status.charAt(0).toUpperCase() + recentBooking.status.slice(1) : 'Confirmed'}
-                                </span>
-                              </p>
-                            </div>
-                            
-                            {/* View Ticket Button */}
-                            <button 
-                              onClick={() => {
-                                openFullScreenTicket(recentBooking);
-                              }}
-                              className="view-ticket-btn"
-                            >
-                              View
-                            </button>
+                        <div key={mostRecentBooking.id} className="event-item">
+                          <div className="event-info">
+                            <h4>{mostRecentBooking.eventName || 'Event Name'}</h4>
+                            <p className="event-details">
+                              {displayDate ? formatDate(displayDate) : 'Date not available'} 
+                              • {mostRecentBooking.eventTime || 'Time not available'} • {mostRecentBooking.eventLocation || 'Location TBD'}
+                            </p>
+                            <p className="event-status">
+                              Status: <span className={mostRecentBooking.status || 'confirmed'}>
+                                {mostRecentBooking.status ? mostRecentBooking.status.charAt(0).toUpperCase() + mostRecentBooking.status.slice(1) : 'Confirmed'}
+                              </span>
+                            </p>
                           </div>
+                          <button className="join-event-btn" onClick={() => openFullScreenTicket(mostRecentBooking)}>View Details</button>
                         </div>
                       );
                     })()
                   ) : (
-                    <div className="no-tickets-container">
-                      <p className="no-tickets-message">No tickets found. Book your slots to get started!</p>
-                      <button 
-                        className="book-event-btn"
-                        onClick={() => navigate('/plans')}
-                      >
-                        Book Your Slots
+                    <div className="no-events-container">
+                      <p className="no-events-message">No upcoming events.</p>
+                      <button className="book-event-btn" onClick={() => navigate('/plans')}>
+                        Find Events
                       </button>
                     </div>
                   )}
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            {/* Upcoming Events Card (Modified to show user's booked events) */}
-            <motion.div className="events-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-              <div className="card-header">
-                <h3>{bookings && bookings.length > 0 ? 'Upcoming Events' : 'No Upcoming Events'}</h3>
-              </div>
-              <div className="events-list" style={{ maxHeight: 'none', minHeight: 'auto' }}>
-                {bookings && bookings.length > 0 ? (
-                  (() => {
-                    // Sort bookings by event date (most recent first)
-                    const sortedBookings = [...bookings].sort((a, b) => {
-                      // Handle different date formats for sorting
-                      let dateA, dateB;
-                      
-                      try {
-                        if (a.eventDate instanceof Date) {
-                          dateA = a.eventDate;
-                        } else if (a.eventDate.toDate && typeof a.eventDate.toDate === 'function') {
-                          dateA = a.eventDate.toDate();
-                        } else if (typeof a.eventDate === 'string') {
-                          dateA = new Date(a.eventDate);
-                        } else if (a.eventDate.seconds && a.eventDate.nanoseconds) {
-                          // Firebase timestamp format
-                          dateA = new Date(a.eventDate.seconds * 1000 + a.eventDate.nanoseconds / 1000000);
-                        } else {
-                          dateA = new Date(a.eventDate);
-                        }
-                        
-                        if (b.eventDate instanceof Date) {
-                          dateB = b.eventDate;
-                        } else if (b.eventDate.toDate && typeof b.eventDate.toDate === 'function') {
-                          dateB = b.eventDate.toDate();
-                        } else if (typeof b.eventDate === 'string') {
-                          dateB = new Date(b.eventDate);
-                        } else if (b.eventDate.seconds && b.eventDate.nanoseconds) {
-                          // Firebase timestamp format
-                          dateB = new Date(b.eventDate.seconds * 1000 + b.eventDate.nanoseconds / 1000000);
-                        } else {
-                          dateB = new Date(b.eventDate);
-                        }
-                      } catch (error) {
-                        // Removed console error to prevent warnings
-                        return 0;
-                      }
-                      
-                      return dateB - dateA; // Descending order (most recent first)
-                    });
-                    
-                    // Get the most recent booking
-                    const mostRecentBooking = sortedBookings[0];
-                    // Removed console log to prevent warnings
-                    
-                    // Handle date display
-                    let displayDate;
-                    try {
-                      if (mostRecentBooking.eventDate instanceof Date) {
-                        displayDate = mostRecentBooking.eventDate;
-                      } else if (mostRecentBooking.eventDate.toDate && typeof mostRecentBooking.eventDate.toDate === 'function') {
-                        displayDate = mostRecentBooking.eventDate.toDate();
-                      } else if (typeof mostRecentBooking.eventDate === 'string') {
-                        displayDate = new Date(mostRecentBooking.eventDate);
-                      } else if (mostRecentBooking.eventDate.seconds && mostRecentBooking.eventDate.nanoseconds) {
-                        // Firebase timestamp format
-                        displayDate = new Date(mostRecentBooking.eventDate.seconds * 1000 + mostRecentBooking.eventDate.nanoseconds / 1000000);
-                      } else {
-                        displayDate = new Date(mostRecentBooking.eventDate);
-                      }
-                    } catch (error) {
-                      // Removed console error to prevent warnings
-                      displayDate = new Date();
-                    }
-                    
-                    return (
-                      <div key={mostRecentBooking.id} className="event-item">
-                        <div className="event-info">
-                          <h4>{mostRecentBooking.eventName || 'Event Name'}</h4>
-                          <p className="event-details">
-                            {displayDate ? formatDate(displayDate) : 'Date not available'} 
-                            • {mostRecentBooking.eventTime || 'Time not available'} • {mostRecentBooking.eventLocation || 'Location not available'}
-                          </p>
-                          <p className="event-status">
-                            Status: <span className={mostRecentBooking.status || 'confirmed'}>
-                              {mostRecentBooking.status ? mostRecentBooking.status.charAt(0).toUpperCase() + mostRecentBooking.status.slice(1) : 'Confirmed'}
-                            </span>
-                          </p>
-                        </div>
-                        <button className="join-event-btn" onClick={() => openFullScreenTicket(mostRecentBooking)}>View Details</button>
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <div className="no-events-container">
-                    <p className="no-events-message">No events found.</p>
-                    <button 
-                      className="book-event-btn"
-                      onClick={() => navigate('/plans')}
-                    >
-                      Book Your Slots
-                    </button>
-                  </div>
-                )}
-                <div className="plan-section" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '1rem', paddingTop: '1rem' }}>
-                  <div className="card-header" style={{ padding: '0.5rem 0' }}>
-                    <FaRunning className="card-icon" />
-                    <h3>My Plan</h3>
-                  </div>
-                  {/* Check if user has any paid bookings first, then check for free trial */}
+              {/* My Plan Card */}
+              <motion.div className="plan-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
+                <div className="card-header">
+                  <FaRunning className="card-icon" />
+                  <h3>My Plan</h3>
+                </div>
+                <div className="plan-section">
                   {bookings && bookings.some(booking => !booking.isFreeTrial) ? (
-                    // Show the most recent paid plan
                     (() => {
-                      const paidBookings = bookings.filter(booking => !booking.isFreeTrial);
+                      const paidBookings = bookings.filter(b => !b.isFreeTrial);
                       if (paidBookings.length > 0) {
-                        // Sort by booking date to get the most recent
-                        const sortedPaidBookings = paidBookings.sort((a, b) => {
-                          let dateA, dateB;
-                          
-                          if (a.bookingDate instanceof Date) {
-                            dateA = a.bookingDate;
-                          } else if (a.bookingDate.toDate && typeof a.bookingDate.toDate === 'function') {
-                            dateA = a.bookingDate.toDate();
-                          } else if (typeof a.bookingDate === 'string') {
-                            dateA = new Date(a.bookingDate);
-                          } else if (a.bookingDate) {
-                            dateA = new Date(a.bookingDate);
-                          } else {
-                            dateA = new Date();
-                          }
-                          
-                          if (b.bookingDate instanceof Date) {
-                            dateB = b.bookingDate;
-                          } else if (b.bookingDate.toDate && typeof b.bookingDate.toDate === 'function') {
-                            dateB = b.bookingDate.toDate();
-                          } else if (typeof b.bookingDate === 'string') {
-                            dateB = new Date(b.bookingDate);
-                          } else if (b.bookingDate) {
-                            dateB = new Date(b.bookingDate);
-                          } else {
-                            dateB = new Date();
-                          }
-                          
-                          return dateB - dateA; // Descending order
-                        });
-                        
-                        const mostRecentPaidBooking = sortedPaidBookings[0];
-                        
+                        const mostRecentPaidBooking = paidBookings[0];
                         return (
-                          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                            <h4>{mostRecentPaidBooking.eventName || 'Paid Plan'}</h4>
-                            <button 
-                              className="upgrade-btn" 
-                              onClick={() => navigate('/plans')}
-                            >
+                          <div style={{ padding: '1rem 0' }}>
+                            <h4 style={{ marginBottom: '1rem', color: 'white', fontSize: '1.1rem' }}>{mostRecentPaidBooking.eventName || 'Paid Plan'}</h4>
+                            <button className="upgrade-btn" onClick={() => navigate('/plans')} style={{ width: '100%' }}>
                               Manage Plan
                             </button>
                           </div>
                         );
-                      } else {
-                        // No paid bookings found
-                        return (
-                          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                            <h4>No Active Plan</h4>
-                            <p>You don't have an active plan</p>
-                            <button 
-                              className="upgrade-btn" 
-                              onClick={() => navigate('/plans')}
-                            >
-                              Choose Plan
-                            </button>
-                          </div>
-                        );
                       }
+                      return null;
                     })()
                   ) : bookings && bookings.some(booking => booking.isFreeTrial) ? (
-                    // Show free trial only if no paid bookings exist
-                    (() => {
-                      return (
-                        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                          <h4>Free Trial</h4>
-                          <button 
-                            className="upgrade-btn" 
-                            onClick={() => navigate('/plans')}
-                          >
-                            Upgrade
-                          </button>
-                        </div>
-                      );
-                    })()
+                    <div style={{ padding: '1rem 0' }}>
+                      <h4 style={{ marginBottom: '1rem', color: 'white', fontSize: '1.1rem' }}>Free Trial</h4>
+                      <button className="upgrade-btn" onClick={() => navigate('/plans')} style={{ width: '100%' }}>
+                        Manage Plan
+                      </button>
+                    </div>
                   ) : (
-                    // No bookings at all
-                    <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                      <h4>No Active Plan</h4>
-                      <p>You don't have an active plan</p>
-                      <button 
-                        className="upgrade-btn" 
-                        onClick={() => navigate('/plans')}
-                      >
+                    <div style={{ padding: '1rem 0' }}>
+                      <h4 style={{ marginBottom: '1rem', color: 'white', fontSize: '1.1rem' }}>No Active Plan</h4>
+                      <button className="upgrade-btn" onClick={() => navigate('/plans')} style={{ width: '100%' }}>
                         Choose Plan
                       </button>
                     </div>
                   )}
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
 
-
-
-
+            {/* Bottom Row: Fitness */}
+            <div className="dashboard-row row-bottom">
+              {/* Fitness Tracker Card */}
+              <motion.div className="fitness-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}>
+                <div className="card-header">
+                  <h3>Fitness & Nutrition</h3>
+                </div>
+                <div className="events-list" style={{ minHeight: 'auto' }}>
+                  <div className="event-item" style={{ border: 'none', background: 'rgba(255, 255, 255, 0.03)' }}>
+                    <div className="event-info">
+                      <h4>Track Your Progress</h4>
+                      <p className="event-details">
+                        Monitor your meals, workouts, and nutrition goals
+                      </p>
+                    </div>
+                    <button className="join-event-btn" onClick={() => navigate('/fitness')}>
+                      Open Tracker
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>

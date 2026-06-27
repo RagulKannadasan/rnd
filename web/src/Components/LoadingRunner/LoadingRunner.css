@@ -4,33 +4,162 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  width: 100%;
+  min-height: 100vh;
 }
 
 .loading-runner.inline {
   flex-direction: row;
+  min-height: auto;
+  width: auto;
 }
 
-.runner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
+.loading-runner.inline .cartoon-runner-container {
+  animation: none;
+}
+
+.running-track-container {
+  position: relative;
+  width: 80vw;
+  max-width: 600px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.running-track {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(241, 90, 36, 0.4) 20%, rgba(241, 90, 36, 0.4) 80%, transparent 100%);
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.track-line {
+  width: 20px;
+  height: 2px;
+  background-color: rgba(241, 90, 36, 0.8);
+  /* Optional: we could animate these moving left to give speed illusion, but the runner moves so static is fine */
+}
+
+.cartoon-runner-container {
+  position: absolute;
+  bottom: 15px; /* Sit right on the track */
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: run-across-screen 4s infinite linear;
+  z-index: 5;
+}
+
+@keyframes run-across-screen {
+  0% { transform: translateX(-40vw); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(40vw); opacity: 0; }
+}
+
+.cartoon-runner-svg {
+  color: #F15A24;
+  transform: rotate(10deg);
+  z-index: 2;
+}
+
+.stickman-group {
+  animation: body-bounce 0.6s infinite linear;
+}
+
+@keyframes body-bounce {
+  0% { transform: translateY(-3px); }
+  25% { transform: translateY(2px); }
+  50% { transform: translateY(-3px); }
+  75% { transform: translateY(2px); }
+  100% { transform: translateY(-3px); }
+}
+
+/* LIMS ANIMATIONS */
+.left-leg { animation: run-thigh 0.6s infinite linear; }
+.left-leg .lower-leg { animation: run-calf 0.6s infinite linear; }
+.left-arm { animation: run-arm 0.6s infinite linear; }
+.left-arm .lower-arm { transform: rotate(-90deg); }
+
+.right-leg { animation: run-thigh 0.6s infinite linear -0.3s; }
+.right-leg .lower-leg { animation: run-calf 0.6s infinite linear -0.3s; }
+.right-arm { animation: run-arm 0.6s infinite linear -0.3s; }
+.right-arm .lower-arm { transform: rotate(-90deg); }
+
+@keyframes run-thigh {
+  0% { transform: rotate(50deg); }
+  50% { transform: rotate(-50deg); }
+  100% { transform: rotate(50deg); }
+}
+
+@keyframes run-calf {
+  0% { transform: rotate(15deg); }
+  25% { transform: rotate(0deg); }
+  50% { transform: rotate(100deg); }
+  75% { transform: rotate(100deg); }
+  100% { transform: rotate(15deg); }
+}
+
+@keyframes run-arm {
+  0% { transform: rotate(70deg); }
+  50% { transform: rotate(-70deg); }
+  100% { transform: rotate(70deg); }
+}
+
+.dust {
+  position: absolute;
+  bottom: 0px;
+  background-color: rgba(255, 255, 255, 0.4);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  z-index: 1;
+}
+
+.dust-1 {
+  width: 14px;
+  height: 14px;
+  animation: dust-fly 0.6s infinite linear;
+}
+
+.dust-2 {
+  width: 10px;
+  height: 10px;
+  animation: dust-fly 0.6s infinite linear 0.2s;
+}
+
+.dust-3 {
+  width: 12px;
+  height: 12px;
+  animation: dust-fly 0.6s infinite linear 0.4s;
+}
+
+@keyframes dust-fly {
+  0% { transform: translate(15px, 0) scale(1); opacity: 0.8; }
+  100% { transform: translate(-40px, -5px) scale(0); opacity: 0; }
 }
 
 .loading-message {
-  margin-top: 10px;
+  margin-top: 15px;
   font-size: 1rem;
-  color: #333;
+  color: #ccc;
+  font-weight: 500;
+  animation: pulse 1.5s infinite alternate ease-in-out;
 }
 
 .loading-runner.inline .loading-message {
   margin-top: 0;
-  margin-left: 10px;
+  margin-left: 15px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
 }

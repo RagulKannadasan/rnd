@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { RecaptchaVerifier, signInWithPhoneNumber, updateProfile } from "firebase/auth";
 import { auth } from "../../firebase";
 import firebaseService from "../../services/firebaseService";
 import Notification from "../Notification/Notification";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import "./SignUp.css";
 
 const SignUp = () => {
@@ -12,9 +14,9 @@ const SignUp = () => {
   const [otp, setOtp] = useState("");
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [notification, setNotification] = useState(null);
-  const [dob, setDob] = useState("");
+  const [dob, setDob] = useState(null);
+  const [timer, setTimer] = useState(0);
   const navigate = useNavigate();
-  const dobInputRef = useRef(null);
 
   useEffect(() => {
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
@@ -24,6 +26,18 @@ const SignUp = () => {
       }
     });
   }, []);
+
+  useEffect(() => {
+    let interval = null;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (interval) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
 
   const showNotification = (message, type = 'info') => {
     setNotification({ message, type });
@@ -55,6 +69,7 @@ const SignUp = () => {
       const phoneNumber = `+91${phone}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       setConfirmationResult(confirmation);
+      setTimer(20);
       showNotification("✅ OTP sent successfully!", "success");
     } catch (error) {
       console.error("Error sending OTP:", error);
@@ -65,28 +80,26 @@ const SignUp = () => {
   // Calculate maximum date (13 years ago from today)
   const getMaxDate = () => {
     const today = new Date();
-    const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
-    return maxDate.toISOString().split('T')[0];
+    return new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
   };
 
   // Calculate minimum date (100 years ago from today)
   const getMinDate = () => {
     const today = new Date();
-    const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
-    return minDate.toISOString().split('T')[0];
+    return new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
   };
 
-  const handleDobChange = (e) => {
-    const selectedDate = e.target.value;
-    setDob(selectedDate);
+  const handleDobChange = (date) => {
+    setDob(date);
     
-    // Check if user is under 13
-    const dobDate = new Date(selectedDate);
-    const today = new Date();
-    const thirteenYearsAgo = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
-    
-    if (dobDate > thirteenYearsAgo) {
-      showNotification("You must be at least 13 years old to register.", "error");
+    if (date) {
+      // Check if user is under 13
+      const today = new Date();
+      const thirteenYearsAgo = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+      
+      if (date > thirteenYearsAgo) {
+        showNotification("You must be at least 13 years old to register.", "error");
+      }
     }
   };
 
@@ -102,14 +115,15 @@ const SignUp = () => {
     }
 
     // Check if user is under 13
-    const dobDate = new Date(dob);
-    const today = new Date();
-    const thirteenYearsAgo = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
-    
-    if (dobDate > thirteenYearsAgo) {
-      showNotification("You must be at least 13 years old to register.", "error");
-      setSubmitting(false);
-      return;
+    if (dob) {
+      const today = new Date();
+      const thirteenYearsAgo = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+      
+      if (dob > thirteenYearsAgo) {
+        showNotification("You must be at least 13 years old to register.", "error");
+        setSubmitting(false);
+        return;
+      }
     }
 
     if (!confirmationResult) {
@@ -131,10 +145,12 @@ const SignUp = () => {
       });
 
       // Map form data to the correct structure for Firestore
+      const formattedDob = dob ? dob.toISOString().split('T')[0] : "";
+      
       const userData = {
         displayName: rawData.fullname,
         gender: rawData.gender,
-        dateOfBirth: dob, // Use the state value
+        dateOfBirth: formattedDob, // Use the formatted string
         profession: rawData.profession,
         phone: rawData.phone,
         emergencyContact: rawData.emergency,
@@ -177,6 +193,10 @@ const SignUp = () => {
 
   return (
     <div className="register-wrapper">
+      <div className="SignUp-background">
+        <div className="blur SignUp-blur-1"></div>
+        <div className="blur SignUp-blur-2"></div>
+      </div>
       <div id="recaptcha-container"></div>
       {notification && (
         <Notification
@@ -217,18 +237,19 @@ const SignUp = () => {
             <div className="form-group">
               <label>Date of Birth *</label>
               <div className="date-input-wrapper">
-                <input 
-                  type="date" 
-                  name="dob" 
-                  required 
-                  value={dob}
+                <DatePicker
+                  selected={dob}
                   onChange={handleDobChange}
-                  ref={dobInputRef}
-                  max={getMaxDate()}
-                  min={getMinDate()}
+                  maxDate={getMaxDate()}
+                  minDate={getMinDate()}
+                  showYearDropdown
+                  showMonthDropdown
+                  dropdownMode="select"
+                  placeholderText="mm/dd/yyyy"
                   className="date-input"
+                  required
                 />
-                <span className="calendar-icon" onClick={() => dobInputRef.current?.showPicker?.()}>
+                <span className="calendar-icon">
                   📅
                 </span>
               </div>
@@ -249,7 +270,14 @@ const SignUp = () => {
               <label>Phone Number * (10 digits)</label>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <input type="tel" name="phone" placeholder="10-digit mobile number" maxLength={10} required style={{ flex: 1 }} value={phone} onChange={(e) => setPhone(e.target.value)} />
-                <button type="button" onClick={handleGetOtp} className="get-otp-btn">Get OTP</button>
+                <button 
+                  type="button" 
+                  onClick={handleGetOtp} 
+                  className={`get-otp-btn ${confirmationResult ? 'sent' : ''}`}
+                  disabled={timer > 0 || (phone && phone.length !== 10)}
+                >
+                  {confirmationResult ? (timer > 0 ? `Resend in ${timer}s` : "Resend OTP") : "Get OTP"}
+                </button>
               </div>
             </div>
             <div className="form-group">

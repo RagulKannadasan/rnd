@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaUsers, FaHome, FaUser, FaSignOutAlt, FaCalendarAlt, FaBell, FaTimes, FaRunning, FaAppleAlt } from 'react-icons/fa';
+import { FaUsers, FaHome, FaUser, FaSignOutAlt, FaCalendarAlt, FaBell, FaTimes, FaRunning, FaAppleAlt, FaPlus } from 'react-icons/fa';
 // import { useAuth } from '../../../contexts/AuthContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
@@ -102,28 +102,34 @@ const DashboardNav = () => {
     }
   };
 
+  const renderNavLinks = () => (
+    <div className="nav-links">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.path}
+            className={`nav-link nav-item-${item.label.toLowerCase().replace(' ', '-')} ${location.pathname === item.path ? 'active' : ''}`}
+            onClick={() => navigate(item.path)}
+          >
+            <Icon />
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
+    <>
     <nav className="dashboard-nav">
       <div className="nav-content">
         <div className="nav-logo">
           <img src="/redlogo.png" alt="Run & Develop" />
-          <span>Run & Develop</span>
         </div>
         
-        <div className="nav-links">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.path}
-                className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
-                onClick={() => navigate(item.path)}
-              >
-                <Icon />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
+        <div className="desktop-nav-links">
+          {renderNavLinks()}
         </div>
         
         <div className="nav-user" ref={profileMenuRef}>
@@ -159,6 +165,46 @@ const DashboardNav = () => {
           )}
         </div>
       </div>
+      </nav>
+
+      <nav className="mobile-bottom-nav">
+        <div className="nav-links">
+          {navItems.slice(0, 2).map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.path}
+                className={`nav-link nav-item-${item.label.toLowerCase().replace(' ', '-')} ${location.pathname === item.path ? 'active' : ''}`}
+                onClick={() => navigate(item.path)}
+              >
+                <Icon />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+          
+          <button 
+            className="mobile-fab-btn"
+            onClick={() => navigate('/community?action=new-post')}
+          >
+            <FaPlus />
+          </button>
+          
+          {navItems.slice(2).map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.path}
+                className={`nav-link nav-item-${item.label.toLowerCase().replace(' ', '-')} ${location.pathname === item.path ? 'active' : ''}`}
+                onClick={() => navigate(item.path)}
+              >
+                <Icon />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {/* In-App Notification for Confirmation */}
       {showNotification && (
@@ -201,7 +247,7 @@ const DashboardNav = () => {
           </div>
         </div>
       )}
-    </nav>
+    </>
   );
 };
 

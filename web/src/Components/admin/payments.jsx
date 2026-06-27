@@ -4,6 +4,7 @@ import { db } from '../../firebase';
 import { formatDate as formatDateUtil } from '../../utils/dateUtils';
 import { getApiUrl } from '../../services/apiConfig';
 import './payments.css';
+import LoadingRunner from '../LoadingRunner/LoadingRunner';
 
 const Payments = () => {
   const [payments, setPayments] = useState([]);
@@ -451,7 +452,7 @@ const Payments = () => {
   };
 
   if (loading) {
-    return <h2 style={{ color: '#ffffff' }}>Loading Payments...</h2>;
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LoadingRunner message="Loading Payments..." /></div>;
   }
 
   return (

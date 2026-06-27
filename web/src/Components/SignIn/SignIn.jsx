@@ -16,8 +16,8 @@ const SignIn = () => {
   const [isPhoneFilled, setIsPhoneFilled] = useState(false);
   const [isOtpFilled, setIsOtpFilled] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [timer, setTimer] = useState(0);
   const navigate = useNavigate();
-  
   const otpInputs = useRef([]);
   const recaptchaContainerRef = useRef(null);
 
@@ -111,6 +111,18 @@ const SignIn = () => {
   }, [phoneNumber]);
 
   useEffect(() => {
+    let interval = null;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (interval) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  useEffect(() => {
     const allFilled = otp.every(digit => digit !== "");
     setIsOtpFilled(allFilled);
   }, [otp]);
@@ -196,6 +208,7 @@ const SignIn = () => {
 
       const result = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
       setConfirmationResult(result);
+      setTimer(20);
     
       setTimeout(() => {
         if (otpInputs.current[0]) {
@@ -340,6 +353,10 @@ const SignIn = () => {
 
   return (
     <div className="SignIn-body">
+      <div className="SignIn-background">
+        <div className="blur SignIn-blur-1"></div>
+        <div className="blur SignIn-blur-2"></div>
+      </div>
       <div className="SignIn-card">
         {notification && (
           <Notification
@@ -378,9 +395,9 @@ const SignIn = () => {
               type="button" 
               className={`btn-SignIn get-otp-btn ${isPhoneFilled ? 'filled' : ''} ${confirmationResult ? 'sent' : ''}`}
               onClick={confirmationResult ? handleResendOtp : handleSendOtp} 
-              disabled={isSendingOtp || (!confirmationResult && phoneNumber.length !== 10)}
+              disabled={isSendingOtp || (!confirmationResult && phoneNumber.length !== 10) || timer > 0}
             >
-              {isSendingOtp ? "Sending..." : (confirmationResult ? "Resend" : "Get OTP")}
+              {isSendingOtp ? "Sending..." : (confirmationResult ? (timer > 0 ? `Resend in ${timer}s` : "Resend") : "Get OTP")}
             </button>
           </div>
 
