@@ -1,2 +1,0 @@
-# Netlify redirects and rewrites
-/api/contact  /.netlify/functions/contact  200
