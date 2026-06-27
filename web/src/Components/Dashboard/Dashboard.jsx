@@ -53,99 +53,90 @@ const Dashboard = () => {
     // Removed console logs to prevent warnings
   }, [bookings]);
 
-  // Function to calculate user statistics based on bookings
+  // Fetch user stats from bookings in a single call
   const calculateUserStats = useCallback(async (userId) => {
     try {
-      // Always calculate from bookings as the primary source
       const bookingsRef = collection(db, 'bookings');
       const q = query(bookingsRef, where('userId', '==', userId));
       const querySnapshot = await getDocs(q);
-      
-      // Count all bookings (not just confirmed ones)
-      let totalRuns = querySnapshot.size;
-      
-      // Each run contributes exactly 2km to total distance as per user requirement
-      let totalDistance = totalRuns * 2;
-      
-      return { totalRuns, totalDistance, currentStreak: 0 }; // Streak calculation would be more complex
+      const totalRuns = querySnapshot.size;
+      const totalDistance = totalRuns * 2;
+      return { totalRuns, totalDistance, currentStreak: 0 };
     } catch (error) {
       console.error('Error calculating user stats:', error);
-      // Fallback to default values
       return { totalRuns: 0, totalDistance: 0, currentStreak: 0 };
     }
   }, []);
-
-  // Function to fetch user statistics based on bookings
-  const fetchUserStats = useCallback(async (userId) => {
-    try {
-      const stats = await calculateUserStats(userId);
-      console.log('Calculated user stats:', stats); // Debug log
-      if (stats) {
-        setUserStats({
-          totalRuns: stats.totalRuns || 0,
-          totalDistance: stats.totalDistance || 0,
-          currentStreak: stats.currentStreak || 0
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching user stats:', error);
-      // Set default values on error
-      setUserStats({
-        totalRuns: 0,
-        totalDistance: 0,
-        currentStreak: 0
-      });
-    }
-  }, [calculateUserStats]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         try {
-          // Fetch user data from Firestore
-          const userDocRef = doc(db, 'users', currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          let userData = {};
-          if (userDoc.exists()) {
-            userData = userDoc.data();
-          } else {
-            // If user document doesn't exist, create initial data
-            userData = {
-              uid: currentUser.uid,
-              email: currentUser.email,
-              displayName: currentUser.displayName || 'User',
-              createdAt: new Date(),
-            };
-          }
-          
+          // Fetch user profile, bookings, and stats in parallel — single render flush
+          const [userDoc, bookingsSnap, stats] = await Promise.all([
+            getDoc(doc(db, 'users', currentUser.uid)),
+            getDocs(query(collection(db, 'bookings'), where('userId', '==', currentUser.uid))),
+            calculateUserStats(currentUser.uid),
+          ]);
+
+          const userData = userDoc.exists() ? userDoc.data() : {};
+
           const userObject = {
             uid: currentUser.uid,
             name: currentUser.displayName || userData.displayName || 'User',
             email: currentUser.email || userData.email || 'No email provided',
             phone: currentUser.phoneNumber || userData.phoneNumber || 'No phone provided',
             photoURL: currentUser.photoURL || null,
-            memberSince: currentUser.metadata.creationTime ? formatDate(new Date(currentUser.metadata.creationTime)) : 'Unknown',
+            memberSince: currentUser.metadata.creationTime
+              ? formatDate(new Date(currentUser.metadata.creationTime))
+              : 'Unknown',
           };
-          
+
+          const userBookings = bookingsSnap.docs.map(docSnap => {
+            const data = docSnap.data();
+            let eventDate = new Date();
+            if (data.eventDate) {
+              if (typeof data.eventDate.toDate === 'function') eventDate = data.eventDate.toDate();
+              else if (typeof data.eventDate === 'string') eventDate = new Date(data.eventDate);
+              else if (data.eventDate instanceof Date) eventDate = data.eventDate;
+              else if (data.eventDate.seconds) eventDate = new Date(data.eventDate.seconds * 1000);
+            }
+            let bookingDate = new Date();
+            if (data.bookingDate) {
+              if (typeof data.bookingDate.toDate === 'function') bookingDate = data.bookingDate.toDate();
+              else if (typeof data.bookingDate === 'string') bookingDate = new Date(data.bookingDate);
+              else if (data.bookingDate instanceof Date) bookingDate = data.bookingDate;
+              else if (data.bookingDate.seconds) bookingDate = new Date(data.bookingDate.seconds * 1000);
+            }
+            return {
+              id: docSnap.id,
+              ...data,
+              eventDate,
+              bookingDate,
+            };
+          });
+
+          // Single batched state update — one re-render
           setUser(userObject);
-          
-          // Fetch user bookings
-          await fetchUserBookings(currentUser.uid);
-          
+          setBookings(userBookings);
+          setUserStats({
+            totalRuns: stats.totalRuns || 0,
+            totalDistance: stats.totalDistance || 0,
+            currentStreak: stats.currentStreak || 0,
+          });
           setLoading(false);
         } catch (error) {
-          // Fallback to basic user data
-          const userObject = {
+          console.error('Dashboard fetch error:', error);
+          setUser({
             uid: currentUser.uid,
             name: currentUser.displayName || 'User',
             email: currentUser.email || 'No email provided',
             phone: currentUser.phoneNumber || 'No phone provided',
             photoURL: currentUser.photoURL || null,
-            memberSince: currentUser.metadata.creationTime ? formatDate(new Date(currentUser.metadata.creationTime)) : 'Unknown',
-          };
-          
-          setUser(userObject);
+            memberSince: currentUser.metadata.creationTime
+              ? formatDate(new Date(currentUser.metadata.creationTime))
+              : 'Unknown',
+          });
           setLoading(false);
         }
       } else {
@@ -154,128 +145,32 @@ const Dashboard = () => {
       }
     });
 
-    return () => {
-      unsubscribe();
-    };
-  }, [navigate]);
+    return () => unsubscribe();
+  }, [navigate, calculateUserStats]);
 
-  // Separate useEffect for user stats updates
+  // Periodic refresh of bookings (every 30s) without re-mounting
   useEffect(() => {
-    console.log('Stats useEffect running, user:', user, 'bookings:', bookings); // Debug log
-    if (user && user.uid) {
-      fetchUserStats(user.uid);
-    }
-  }, [user, fetchUserStats, bookings]); // Add bookings as dependency to recalculate stats when bookings change
-
-  // Debug useEffect to see when user changes
-  useEffect(() => {
-    // Removed console log to prevent warnings
-  }, [user]);
-
-  // Fetch user bookings when component mounts or user changes
-  useEffect(() => {
-    console.log('Bookings useEffect running, user:', user); // Debug log
-    if (user && user.uid) {
-      fetchUserBookings(user.uid);
-    }
-  }, [user]);
-
-  // Add a refresh effect to ensure bookings are updated
-  useEffect(() => {
-    if (user && user.uid) {
-      console.log('Setting up interval for user:', user.uid); // Debug log
-      const interval = setInterval(() => {
-        console.log('Interval running, fetching bookings for user:', user.uid); // Debug log
-        fetchUserBookings(user.uid);
-      }, 30000); // Refresh every 30 seconds
-      
-      return () => {
-        console.log('Clearing interval for user:', user.uid); // Debug log
-        clearInterval(interval);
-      };
-    }
-  }, [user]);
-
-  // handleJoinEvent function removed as it's no longer used
-
-  // fetchUpcomingEvents function removed as it's no longer used
-
-  const fetchUserBookings = async (userId) => {
-    try {
-      console.log(`Fetching bookings for user ${userId}`); // Debug log
-      
-      // Then fetch from Firestore for accurate data
-      const bookingsRef = collection(db, 'bookings');
-      // Remove the orderBy clause that might be causing issues with missing or invalid dates
-      const q = query(bookingsRef, where('userId', '==', userId));
-      const querySnapshot = await getDocs(q);
-      
-      console.log(`Found ${querySnapshot.size} bookings`); // Debug log
-      
-      // Removed console logs to prevent warnings
-      
-      const userBookings = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        // Removed console log to prevent warnings
-        
-        // Handle date conversion properly
-        let eventDate = new Date();
-        if (data.eventDate) {
-          if (data.eventDate.toDate && typeof data.eventDate.toDate === 'function') {
-            eventDate = data.eventDate.toDate();
-          } else if (typeof data.eventDate === 'string') {
-            eventDate = new Date(data.eventDate);
-          } else if (data.eventDate instanceof Date) {
-            eventDate = data.eventDate;
-          } else if (data.eventDate.seconds && data.eventDate.nanoseconds) {
-            // Firebase timestamp format
-            eventDate = new Date(data.eventDate.seconds * 1000 + data.eventDate.nanoseconds / 1000000);
-          } else {
-            // Fallback to current date if we can't parse
-            eventDate = new Date(data.eventDate);
+    if (!user?.uid) return;
+    const interval = setInterval(async () => {
+      try {
+        const snap = await getDocs(query(collection(db, 'bookings'), where('userId', '==', user.uid)));
+        const refreshed = snap.docs.map(d => {
+          const data = d.data();
+          let eventDate = new Date();
+          if (data.eventDate) {
+            if (typeof data.eventDate.toDate === 'function') eventDate = data.eventDate.toDate();
+            else if (data.eventDate.seconds) eventDate = new Date(data.eventDate.seconds * 1000);
+            else eventDate = new Date(data.eventDate);
           }
-        }
-  
-        // Also handle bookingDate conversion
-        let bookingDate = new Date();
-        if (data.bookingDate) {
-          if (data.bookingDate.toDate && typeof data.bookingDate.toDate === 'function') {
-            bookingDate = data.bookingDate.toDate();
-          } else if (typeof data.bookingDate === 'string') {
-            bookingDate = new Date(data.bookingDate);
-          } else if (data.bookingDate instanceof Date) {
-            bookingDate = data.bookingDate;
-          } else if (data.bookingDate.seconds && data.bookingDate.nanoseconds) {
-            // Firebase timestamp format
-            bookingDate = new Date(data.bookingDate.seconds * 1000 + data.bookingDate.nanoseconds / 1000000);
-          } else {
-            bookingDate = new Date(data.bookingDate);
-          }
-        }
-  
-        const booking = {
-          id: doc.id,
-          ...data,
-          eventDate: eventDate,
-          bookingDate: bookingDate
-        };
-  
-        // Removed console log to prevent warnings
-        return booking;
-      });
-  
-      // Removed console logs to prevent warnings
-      setBookings(userBookings);
-  
-      // Update localStorage with fresh data
-      localStorage.setItem('eventBookings', JSON.stringify(userBookings));
-  
-      // Removed console log to prevent warnings
-  
-    } catch (error) {
-      // Removed console error to prevent warnings
-    }
-  };
+          return { id: d.id, ...data, eventDate };
+        });
+        setBookings(refreshed);
+      } catch (_) {}
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [user?.uid]);
+
+  // handleJoinEvent and fetchUpcomingEvents removed — no longer used
 
   // Function to generate QR code data in the correct format for scanning
   const generateQRData = (booking) => {
@@ -472,9 +367,14 @@ Thank you for booking with R&D - Run and Develop!
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.75rem' }}>
                   <button 
-                    onClick={() => {
+                    onClick={async () => {
                       if (user && user.uid) {
-                        fetchUserStats(user.uid);
+                        const stats = await calculateUserStats(user.uid);
+                        setUserStats({
+                          totalRuns: stats.totalRuns || 0,
+                          totalDistance: stats.totalDistance || 0,
+                          currentStreak: stats.currentStreak || 0,
+                        });
                       }
                     }}
                     className="refresh-stats-btn"
