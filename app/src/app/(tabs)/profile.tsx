@@ -41,12 +41,17 @@ export default function ProfileScreen() {
     const fetchUserData = async () => {
       if (auth.currentUser) {
         try {
-          const userDocRef = doc(db, 'users', auth.currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
+          const token = await auth.currentUser.getIdToken();
+          const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+          
+          const res = await fetch(`${apiUrl}/api/users/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
           
           let userData: any = {};
-          if (userDoc.exists()) {
-            userData = userDoc.data();
+          if (res.ok) {
+            const data = await res.json();
+            userData = data.profile || {};
           }
           
           setFormData({
@@ -83,9 +88,10 @@ export default function ProfileScreen() {
           displayName: formData.displayName
         });
       }
+      const token = await auth.currentUser.getIdToken();
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
       
-      const userDocRef = doc(db, 'users', auth.currentUser.uid);
-      await setDoc(userDocRef, {
+      const payload = {
         displayName: formData.displayName,
         email: formData.email,
         phone: formData.phone || '',
@@ -96,9 +102,19 @@ export default function ProfileScreen() {
         dateOfBirth: formData.dateOfBirth || '',
         emergencyContact: formData.emergencyContact || '',
         instagram: formData.instagram || '',
-        goals: formData.goals.split(',').map((g: string) => g.trim()).filter((g: string) => g.length > 0),
-        updatedAt: new Date()
-      }, { merge: true });
+        goals: formData.goals.split(',').map((g: string) => g.trim()).filter((g: string) => g.length > 0)
+      };
+      
+      const res = await fetch(`${apiUrl}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!res.ok) throw new Error('Failed to update profile via API');
       
       setIsEditing(false);
       Alert.alert("Success", "Profile updated successfully!");

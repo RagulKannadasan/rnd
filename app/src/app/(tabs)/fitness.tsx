@@ -53,18 +53,12 @@ export default function FitnessScreen() {
   const loadWorkouts = async () => {
     if (!user) return;
     try {
-      const q = query(
-        collection(db, 'userWorkouts'), 
-        where('userId', '==', user.uid)
-      );
-      const snap = await getDocs(q);
-      const docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      docs.sort((a: any, b: any) => {
-        const dateA = a.loggedAt?.toMillis ? a.loggedAt.toMillis() : 0;
-        const dateB = b.loggedAt?.toMillis ? b.loggedAt.toMillis() : 0;
-        return dateB - dateA;
+      const token = await user.getIdToken();
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+      const res = await fetch(`${apiUrl}/api/fitness/workouts`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      setWorkouts(docs);
+      if (res.ok) setWorkouts(await res.json());
     } catch (e) {
       console.error(e);
     }
@@ -73,18 +67,12 @@ export default function FitnessScreen() {
   const loadMeals = async () => {
     if (!user) return;
     try {
-      const q = query(
-        collection(db, 'userMeals'), 
-        where('userId', '==', user.uid)
-      );
-      const snap = await getDocs(q);
-      const docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      docs.sort((a: any, b: any) => {
-        const dateA = a.loggedAt?.toMillis ? a.loggedAt.toMillis() : 0;
-        const dateB = b.loggedAt?.toMillis ? b.loggedAt.toMillis() : 0;
-        return dateB - dateA;
+      const token = await user.getIdToken();
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+      const res = await fetch(`${apiUrl}/api/fitness/meals`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      setMeals(docs);
+      if (res.ok) setMeals(await res.json());
     } catch (e) {
       console.error(e);
     }
@@ -96,33 +84,27 @@ export default function FitnessScreen() {
     setFetchingApi(true);
     
     try {
-      const apiKey = 'sk-1116ca52ef05484c83f0b8b3603f7ad0'; 
-      const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
       
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${apiUrl}/api/ai/calories`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "deepseek-chat",
-          messages: [
-            {
-              role: "user",
-              content: `Calculate approximate calories burned for a 30-year-old male weighing 70kg doing ${newWorkout.name} (${newWorkout.type}) for ${newWorkout.duration} minutes. Return only a number representing total calories burned.`
-            }
-          ],
-          temperature: 0.3,
-          max_tokens: 50
+          name: newWorkout.name,
+          type: newWorkout.type,
+          duration: newWorkout.duration
         })
       });
       
       const data = await response.json();
-      const caloriesMatch = data.choices[0].message.content.match(/\d+/);
-      const calories = caloriesMatch ? caloriesMatch[0] : '0';
       
-      setNewWorkout(prev => ({ ...prev, calories }));
+      if (data.calories) {
+        setNewWorkout(prev => ({ ...prev, calories: data.calories }));
+      } else {
+        throw new Error('No calories returned');
+      }
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Could not calculate calories. Enter manually.');
@@ -136,42 +118,32 @@ export default function FitnessScreen() {
     setFetchingApi(true);
     
     try {
-      const apiKey = 'sk-1116ca52ef05484c83f0b8b3603f7ad0';
-      const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
       
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${apiUrl}/api/ai/nutrition`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "deepseek-chat",
-          messages: [
-            {
-              role: "user",
-              content: `Given a food name, return approximate nutrition facts per 100 grams in strict JSON format with keys: food, calories, protein_g, carbs_g, fat_g. Only return valid JSON without any markdown formatting. Food: ${newMeal.name}`
-            }
-          ],
-          temperature: 0.1,
-          max_tokens: 200
+          name: newMeal.name,
+          quantity: newMeal.quantity
         })
       });
       
       const data = await response.json();
-      let cleaned = data.choices[0].message.content.trim();
-      cleaned = cleaned.replace(/```json/g, '').replace(/```/g, '').trim();
       
-      const nutritionData = JSON.parse(cleaned);
-      const multiplier = parseFloat(newMeal.quantity) / 100; // assuming grams for simplicity
-      
-      setNewMeal(prev => ({
-        ...prev,
-        calories: Math.round((nutritionData.calories || 0) * multiplier).toString(),
-        protein: (Math.round((nutritionData.protein_g || 0) * multiplier * 10) / 10).toString(),
-        carbs: (Math.round((nutritionData.carbs_g || 0) * multiplier * 10) / 10).toString(),
-        fat: (Math.round((nutritionData.fat_g || 0) * multiplier * 10) / 10).toString()
-      }));
+      if (data.calories) {
+        setNewMeal(prev => ({
+          ...prev,
+          calories: data.calories,
+          protein: data.protein,
+          carbs: data.carbs,
+          fat: data.fat
+        }));
+      } else {
+        throw new Error('Invalid nutrition data');
+      }
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Failed to fetch nutrition data.');
@@ -185,18 +157,25 @@ export default function FitnessScreen() {
     if (!user) return;
     setLoading(true);
     try {
-      await addDoc(collection(db, 'userWorkouts'), {
-        userId: user.uid,
-        ...newWorkout,
-        duration: parseInt(newWorkout.duration) || 0,
-        calories: parseInt(newWorkout.calories) || 0,
-        distance: parseFloat(newWorkout.distance) || 0,
-        date: new Date().toISOString().split('T')[0],
-        loggedAt: serverTimestamp()
+      const token = await user.getIdToken();
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+      const res = await fetch(`${apiUrl}/api/fitness/workouts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          ...newWorkout,
+          duration: parseInt(newWorkout.duration) || 0,
+          calories: parseInt(newWorkout.calories) || 0,
+          distance: parseFloat(newWorkout.distance) || 0
+        })
       });
-      setNewWorkout({ name: '', type: 'cardio', duration: '', calories: '', distance: '' });
-      loadWorkouts();
-      Alert.alert('Success', 'Workout logged successfully!');
+      if (res.ok) {
+        setNewWorkout({ name: '', type: 'cardio', duration: '', calories: '', distance: '' });
+        loadWorkouts();
+        Alert.alert('Success', 'Workout logged successfully!');
+      } else {
+        throw new Error('Failed to log');
+      }
     } catch (e) {
       console.error(e);
       Alert.alert('Error', 'Failed to log workout');
@@ -209,19 +188,26 @@ export default function FitnessScreen() {
     if (!user) return;
     setLoading(true);
     try {
-      await addDoc(collection(db, 'userMeals'), {
-        userId: user.uid,
-        ...newMeal,
-        calories: parseInt(newMeal.calories) || 0,
-        protein: parseInt(newMeal.protein) || 0,
-        carbs: parseInt(newMeal.carbs) || 0,
-        fat: parseInt(newMeal.fat) || 0,
-        date: new Date().toISOString().split('T')[0],
-        loggedAt: serverTimestamp()
+      const token = await user.getIdToken();
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+      const res = await fetch(`${apiUrl}/api/fitness/meals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          ...newMeal,
+          calories: parseInt(newMeal.calories) || 0,
+          protein: parseInt(newMeal.protein) || 0,
+          carbs: parseInt(newMeal.carbs) || 0,
+          fat: parseInt(newMeal.fat) || 0
+        })
       });
-      setNewMeal({ name: '', quantity: '100', unit: 'grams', calories: '', protein: '', carbs: '', fat: '', mealType: 'breakfast' });
-      loadMeals();
-      Alert.alert('Success', 'Meal logged successfully!');
+      if (res.ok) {
+        setNewMeal({ name: '', quantity: '100', unit: 'grams', calories: '', protein: '', carbs: '', fat: '', mealType: 'breakfast' });
+        loadMeals();
+        Alert.alert('Success', 'Meal logged successfully!');
+      } else {
+        throw new Error('Failed to log');
+      }
     } catch (e) {
       console.error(e);
       Alert.alert('Error', 'Failed to log meal');
@@ -231,10 +217,18 @@ export default function FitnessScreen() {
   };
 
   const deleteItem = async (id: string, type: 'workouts' | 'meals') => {
+    if (!user) return;
     try {
-      await deleteDoc(doc(db, type === 'workouts' ? 'userWorkouts' : 'userMeals', id));
-      if (type === 'workouts') loadWorkouts();
-      else loadMeals();
+      const token = await user.getIdToken();
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+      const res = await fetch(`${apiUrl}/api/fitness/${type}/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        if (type === 'workouts') loadWorkouts();
+        else loadMeals();
+      }
     } catch (e) {
       console.error(e);
     }

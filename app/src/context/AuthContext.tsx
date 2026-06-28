@@ -32,10 +32,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             email: firebaseUser.email || userData.email,
             phone: firebaseUser.phoneNumber || userData.phoneNumber,
             photoURL: firebaseUser.photoURL,
+            getIdToken: () => firebaseUser.getIdToken(),
           });
         } catch (error) {
           console.error("Error fetching user profile:", error);
-          setUser({ uid: firebaseUser.uid, email: firebaseUser.email });
+          setUser({ 
+            uid: firebaseUser.uid, 
+            email: firebaseUser.email,
+            getIdToken: () => firebaseUser.getIdToken(),
+          });
         }
       } else {
         setUser(null);

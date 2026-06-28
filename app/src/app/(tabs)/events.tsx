@@ -27,26 +27,20 @@ export default function EventsScreen() {
   useEffect(() => {
     const fetchEventAndBookings = async () => {
       try {
+        const token = user ? await user.getIdToken() : null;
+        const headers = token ? { Authorization: `Bearer ${token}` } : ({} as Record<string, string>);
+        const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+        
         // Fetch Upcoming Events
-        const eventsRef = collection(db, 'upcomingEvents');
-        const q = query(eventsRef, orderBy('date', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const events: any[] = [];
-        querySnapshot.forEach((doc) => {
-          events.push({ id: doc.id, ...doc.data() });
-        });
+        const upRes = await fetch(`${apiUrl}/api/events/upcoming`, { headers });
+        const events = upRes.ok ? await upRes.json() : [];
         
         // Fetch Past Events
-        const pastRef = collection(db, 'pastEvents');
-        const pastQ = query(pastRef, orderBy('date', 'desc'));
-        const pastSnapshot = await getDocs(pastQ);
-        const past: any[] = [];
-        pastSnapshot.forEach((doc) => {
-          past.push({ id: doc.id, ...doc.data() });
-        });
+        const pastRes = await fetch(`${apiUrl}/api/events/past`, { headers });
+        const past = pastRes.ok ? await pastRes.json() : [];
         setPastEvents(past);
         
-        const weeklyRun = events.find(e => e.name && e.name.includes('Weekly Community Run'));
+        const weeklyRun = events.find((e: any) => e.name && e.name.includes('Weekly Community Run')) || events[0];
         
         if (weeklyRun) {
           setMainEvent(weeklyRun);
@@ -58,27 +52,30 @@ export default function EventsScreen() {
             time: '07:00 AM',
             location: 'C3 Cafe, City Park',
             description: 'Join fellow runners for an unforgettable experience.',
-            image: null,
-            status: 'Open for Registration',
-            participants: 25,
-            maxParticipants: 50
+            schedule: [
+              { time: '06:30 AM', activity: 'Assembly & Warm-up' },
+              { time: '07:00 AM', activity: 'Run Starts' },
+              { time: '08:00 AM', activity: 'Cool down & Networking' }
+            ],
+            image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=2070&auto=format&fit=crop'
           });
         }
-
-        // Fetch User Bookings
-        if (user) {
-          const bookingsRef = collection(db, 'bookings');
-          const bq = query(bookingsRef, where('userId', '==', user.uid));
-          const bSnap = await getDocs(bq);
-          setUserBookings(bSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        
+        // Fetch User Bookings to disable button
+        if (user && token) {
+          const bRes = await fetch(`${apiUrl}/api/users/bookings`, { headers });
+          if (bRes.ok) {
+            setUserBookings(await bRes.json());
+          }
         }
-      } catch (error) {
-        console.error('Error fetching events:', error);
+        
+      } catch (e) {
+        console.error('Error fetching events:', e);
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchEventAndBookings();
   }, [user]);
 

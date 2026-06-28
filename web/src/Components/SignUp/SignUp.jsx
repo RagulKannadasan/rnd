@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { RecaptchaVerifier, signInWithPhoneNumber, updateProfile } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, updateProfile, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../firebase";
 import firebaseService from "../../services/firebaseService";
 import Notification from "../Notification/Notification";
@@ -182,6 +182,40 @@ const SignUp = () => {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      console.log("Google Sign-Up successful!", user.email);
+      
+      // Store user details in localStorage
+      const userDetails = {
+        fullName: user.displayName || "Google User",
+        phone: user.phoneNumber || "",
+        emergencyContact: "",
+        firebase_uid: user.uid
+      };
+      localStorage.setItem('currentUser', JSON.stringify(userDetails));
+
+      // Register user in Firestore
+      await firebaseService.saveUserProfile(user.uid, {
+        displayName: user.displayName || "Google User",
+        firebase_uid: user.uid,
+        email: user.email,
+        joinCrew: false,
+        termsAccepted: true
+      });
+
+      showNotification("✅ Signed up with Google successfully!", "success");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Google Sign-Up Error:", err);
+      showNotification(err.message || "Google Sign-Up failed. Please try again.", "error");
+    }
+  };
+
   const handleTermsClick = (e) => {
     e.preventDefault();
     navigate('/terms');
@@ -301,6 +335,22 @@ const SignUp = () => {
 
           <button type="submit" disabled={submitting}>
             {submitting ? "Submitting..." : "Sign Up"}
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }}></div>
+            <span style={{ color: '#666', padding: '0 10px', fontSize: '14px', fontWeight: 'bold' }}>OR</span>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }}></div>
+          </div>
+
+          <button
+            type="button"
+            className="btn-SignIn google-btn"
+            onClick={handleGoogleSignUp}
+            style={{ backgroundColor: '#fff', color: '#000', marginTop: '0', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
+            Sign Up with Google
           </button>
 
           <p className="SignIn-text">

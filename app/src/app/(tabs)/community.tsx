@@ -29,40 +29,36 @@ export default function CommunityScreen() {
   const currentUser = auth.currentUser;
 
   useEffect(() => {
-    const postsQuery = query(
-      collection(db, 'communityPosts'),
-      orderBy('createdAt', 'desc'),
-      limit(20)
-    );
-    
-    const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
-      const postsData: any[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        if (!Array.isArray(data.likedBy)) data.likedBy = [];
-        postsData.push({ id: doc.id, ...data });
-      });
-      setPosts(postsData);
-      setLoading(false);
-    });
-
-    const fetchUsers = async () => {
+    const fetchCommunityData = async () => {
       try {
-        const usersSnap = await getDocs(query(collection(db, 'users')));
-        const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Mock stats for native leaderboard to save read costs on mount
-        const withStats = users.map(u => ({ ...u, totalRuns: Math.floor(Math.random() * 20), totalDistance: Math.floor(Math.random() * 100) }));
-        withStats.sort((a, b) => b.totalDistance - a.totalDistance);
-        setRankedUsers(withStats.slice(0, 10));
+        const token = currentUser ? await currentUser.getIdToken() : null;
+        const headers = token ? { Authorization: `Bearer ${token}` } : ({} as Record<string, string>);
+        const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+        
+        // Fetch posts
+        const postsRes = await fetch(`${apiUrl}/api/community/posts`, { headers });
+        if (postsRes.ok) {
+          const postsData = await postsRes.json();
+          // Provide defaults for old data
+          setPosts(postsData.map((p: any) => ({ ...p, likedBy: p.likedBy || [] })));
+        }
+
+        // Fetch leaderboard
+        const boardRes = await fetch(`${apiUrl}/api/community/leaderboard`, { headers });
+        if (boardRes.ok) {
+          const boardData = await boardRes.json();
+          setRankedUsers(boardData);
+        }
       } catch (e) {
-        console.error(e);
+        console.error('Error fetching community data:', e);
+      } finally {
+        setLoading(false);
       }
     };
-    
-    fetchUsers();
 
-    return () => unsubscribePosts();
-  }, []);
+    fetchCommunityData();
+    // No snapshot available for REST, would need to implement pull-to-refresh
+  }, [currentUser]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -98,19 +94,27 @@ export default function CommunityScreen() {
         imageUrl = await getDownloadURL(snapshot.ref);
       }
 
-      await addDoc(collection(db, 'communityPosts'), {
-        userId: currentUser.uid,
-        userName: currentUser.displayName || 'Anonymous User',
-        userPhoto: currentUser.photoURL || null,
-        userLevel: 'Beginner',
-        content: newPostContent,
-        image: imageUrl,
-        likes: 0, 
-        comments: 0,
-        likedBy: [],
-        createdAt: serverTimestamp(),
-        timestamp: new Date().toLocaleString(),
+      const token = await currentUser.getIdToken();
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+      
+      const res = await fetch(`${apiUrl}/api/community/posts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          content: newPostContent,
+          authorName: currentUser.displayName,
+          authorPhoto: currentUser.photoURL,
+          image: imageUrl
+        })
       });
+
+      if (!res.ok) throw new Error('Failed to create post');
+      
+      const newPost = await res.json();
+      setPosts(prev => [newPost, ...prev]);
 
       setNewPostContent('');
       setNewPostImage(null);
@@ -125,18 +129,33 @@ export default function CommunityScreen() {
   const handleLike = async (postId: string, isLiked: boolean) => {
     if (!currentUser) return;
     try {
-      const postRef = doc(db, 'communityPosts', postId);
-      await updateDoc(postRef, isLiked
-        ? { likes: increment(-1), likedBy: arrayRemove(currentUser.uid) }
-        : { likes: increment(1), likedBy: arrayUnion(currentUser.uid) }
-      );
+      // Optimistic UI update
+      setPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+          const newLikedBy = isLiked ? p.likedBy.filter((id: string) => id !== currentUser.uid) : [...p.likedBy, currentUser.uid];
+          return { ...p, likes: p.likes + (isLiked ? -1 : 1), likedBy: newLikedBy };
+        }
+        return p;
+      }));
+      
+      const token = await currentUser.getIdToken();
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+      
+      await fetch(`${apiUrl}/api/community/posts/${postId}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ isLiked })
+      });
     } catch (err) {
       console.error('Error updating like:', err);
     }
   };
 
   const handleDeletePost = (postId: string, postUserId: string) => {
-    if (!currentUser || currentUser.uid !== postUserId) return;
+    if (!currentUser || (currentUser.uid !== postUserId && postUserId !== currentUser.uid)) return; // Allow author logic
     Alert.alert(
       "Delete Post",
       "Are you sure you want to delete this post?",
@@ -147,9 +166,21 @@ export default function CommunityScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await deleteDoc(doc(db, 'communityPosts', postId));
-            } catch (e) {
-              console.error(e);
+              const token = await currentUser.getIdToken();
+              const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+              
+              const res = await fetch(`${apiUrl}/api/community/posts/${postId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              
+              if (res.ok) {
+                setPosts(prev => prev.filter(p => p.id !== postId));
+              } else {
+                Alert.alert('Error', 'Could not delete post');
+              }
+            } catch (err) {
+              console.error('Error deleting post', err);
             }
           }
         }

@@ -34,53 +34,51 @@ export default function DashboardScreen() {
   const [fullScreenTicket, setFullScreenTicket] = useState<any>(null);
 
   const calculateUserStats = useCallback(async (userId: string) => {
-    try {
-      const bookingsRef = collection(db, 'bookings');
-      const q = query(bookingsRef, where('userId', '==', userId));
-      const querySnapshot = await getDocs(q);
-      const totalRuns = querySnapshot.size;
-      const totalDistance = totalRuns * 2;
-      return { totalRuns, totalDistance, currentStreak: 0 };
-    } catch (error) {
-      console.error('Error calculating user stats:', error);
-      return { totalRuns: 0, totalDistance: 0, currentStreak: 0 };
-    }
+    // This is now fetched from the backend in the useEffect
+    return { totalRuns: 0, totalDistance: 0, currentStreak: 0 };
   }, []);
 
   useEffect(() => {
     let isMounted = true;
     const fetchDashboardData = async () => {
-      if (!user?.uid) {
+      if (!user) {
         setLoading(false);
         return;
       }
       
       try {
         setLoading(true);
-        const [bookingsSnap, stats] = await Promise.all([
-          getDocs(query(collection(db, 'bookings'), where('userId', '==', user.uid))),
-          calculateUserStats(user.uid),
+        const token = await user.getIdToken();
+        const headers = { Authorization: `Bearer ${token}` };
+        const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+
+        const [bookingsRes, profileRes] = await Promise.all([
+          fetch(`${apiUrl}/api/users/bookings`, { headers }),
+          fetch(`${apiUrl}/api/users/profile`, { headers })
         ]);
 
         if (!isMounted) return;
 
-        const userBookings = bookingsSnap.docs.map(docSnap => {
-          const data = docSnap.data();
-          let eventDate = new Date();
-          if (data.eventDate) {
-            if (typeof data.eventDate.toDate === 'function') eventDate = data.eventDate.toDate();
-            else if (typeof data.eventDate === 'string') eventDate = new Date(data.eventDate);
-            else if (data.eventDate.seconds) eventDate = new Date(data.eventDate.seconds * 1000);
-          }
-          return { id: docSnap.id, ...data, eventDate };
-        });
+        if (bookingsRes.ok) {
+          const bookingsSnap = await bookingsRes.json();
+          const userBookings = bookingsSnap.map((data: any) => {
+            let eventDate = new Date();
+            if (data.eventDate) {
+              if (typeof data.eventDate === 'string') eventDate = new Date(data.eventDate);
+            }
+            return { ...data, eventDate };
+          });
+          setBookings(userBookings);
+        }
 
-        setBookings(userBookings);
-        setUserStats({
-          totalRuns: stats.totalRuns || 0,
-          totalDistance: stats.totalDistance || 0,
-          currentStreak: stats.currentStreak || 0,
-        });
+        if (profileRes.ok) {
+          const { stats } = await profileRes.json();
+          setUserStats({
+            totalRuns: stats.totalWorkouts || 0,
+            totalDistance: parseFloat(stats.totalDistance) || 0,
+            currentStreak: stats.currentStreak || 0,
+          });
+        }
       } catch (error) {
         console.error('Dashboard fetch error:', error);
       } finally {

@@ -115,6 +115,7 @@ export default function SignInScreen() {
             </TouchableOpacity>
           </>
         )}
+
       </View>
     </KeyboardAvoidingView>
   );
@@ -200,5 +201,5 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
     textDecorationLine: 'underline',
-  }
+  },
 });

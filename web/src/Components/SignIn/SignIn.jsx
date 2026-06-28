@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
+import { signInWithPhoneNumber, RecaptchaVerifier, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 import firebaseService from "../../services/firebaseService";
@@ -344,6 +344,25 @@ const SignIn = () => {
     }
   };
   
+  const handleGoogleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      console.log("Google Sign-In successful!", result.user.email);
+      
+      // Clear any existing user data from localStorage
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('eventBookings');
+      localStorage.removeItem('eventParticipants');
+      
+      // Navigate to dashboard
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Google Sign-In Error:", err);
+      showNotification(err.message || "Google Sign-In failed. Please try again.", "error");
+    }
+  };
+  
   const handleResendOtp = async (e) => {
     e.preventDefault();
     setConfirmationResult(null);
@@ -440,6 +459,22 @@ const SignIn = () => {
           <div className="admin-link">
             <a href="/admin" className="btn-admin">Admin Login</a>
           </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }}></div>
+            <span style={{ color: '#666', padding: '0 10px', fontSize: '14px', fontWeight: 'bold' }}>OR</span>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }}></div>
+          </div>
+
+          <button
+            type="button"
+            className="btn-SignIn google-btn"
+            onClick={handleGoogleSignIn}
+            style={{ backgroundColor: '#fff', color: '#000', marginTop: '0', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}
+          >
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
+            Continue with Google
+          </button>
         </form>
       </div>
     </div>
